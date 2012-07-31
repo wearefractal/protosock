@@ -1,6 +1,6 @@
 {
    "name":"protosock",
-   "description":"Nothing here yet",
+   "description":"Framework for building network protocols",
    "version":"0.0.1",
    "homepage":"http://github.com/wearefractal/protosock",
    "repository":"git://github.com/wearefractal/protosock.git",

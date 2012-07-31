@@ -2,7 +2,7 @@ ProtoSock = require '../'
 should = require 'should'
 require 'mocha'
 
-httpServer = require('http').createServer()
+httpServer = require('http').createServer().listen 9091
 httpServer.setMaxListeners -1
 
 engineClient = require 'engine.io-client'
@@ -16,11 +16,6 @@ getClient = (srv) ->
 TestProtocol = require './plugins/TestServer'
 
 describe 'Server', ->
-  beforeEach (done) ->
-    httpServer.listen 9091, -> done()
-  afterEach (done) ->
-    httpServer.close -> done()
-
   describe 'createServer()', ->
     it 'should construct from test protocol', (done) ->
       testProtocol = TestProtocol httpServer
