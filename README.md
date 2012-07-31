@@ -76,10 +76,6 @@ def =
 client = ProtoSock.createClient def
 ```
 
-## Examples
-
-You can view more examples in the [example folder.](https://github.com/wearefractal/protosock/tree/master/examples)
-
 ## LICENSE
 
 (MIT License)
