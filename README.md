@@ -1,14 +1,14 @@
-![status](https://secure.travis-ci.org/wearefractal/APPNAME.png?branch=master)
+![status](https://secure.travis-ci.org/wearefractal/protosock.png?branch=master)
 
 ## Information
 
 <table>
 <tr> 
-<td>Package</td><td>APPNAME</td>
+<td>Package</td><td>protosock</td>
 </tr>
 <tr>
 <td>Description</td>
-<td>NOTHING HERE YET</td>
+<td>Framework for creating websocket-based protocols</td>
 </tr>
 <tr>
 <td>Node Version</td>
@@ -19,12 +19,37 @@
 ## Usage
 
 ```coffee-script
-NOTHING HERE YET
+module.exports =
+  
+  # Called on server start
+  start: ->
+
+  # Formatters for messages
+  inbound: (msg, done) -> done JSON.parse msg
+  outbound: (msg, done) -> done JSON.stringify msg
+
+  # Validate/negotiate with socket before accepting messages
+  validate: (socket, msg, done) -> done (msg? and msg.protocol is 'ProtoSock')
+  # Handle invalid socket
+  invalid: (socket, msg) -> socket.close()
+
+  # Handle socket errors
+  error: (socket, err) ->
+    @emit 'error', err
+    return
+
+  # Handle formatted and valid socket message
+  message: (socket, msg) ->
+
+
+  # Extend the socket object
+  socket:
+    dostuff: ->
 ```
 
 ## Examples
 
-You can view more examples in the [example folder.](https://github.com/wearefractal/APPNAME/tree/master/examples)
+You can view more examples in the [example folder.](https://github.com/wearefractal/protosock/tree/master/examples)
 
 ## LICENSE
 
