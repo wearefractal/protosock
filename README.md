@@ -16,35 +16,64 @@
 </tr>
 </table>
 
-## Usage
+## Server Usage
 
 ```coffee-script
-module.exports =
-  
-  # Called on server start
+ps = require 'protosock'
+def =
+  # Server options
+  options:
+    server: httpServer
+    namespace: 'TestProtocol'
+    resource: 'default'
+
+  # Called on server construct
   start: ->
 
-  # Formatters for messages
-  inbound: (msg, done) -> done JSON.parse msg
-  outbound: (msg, done) -> done JSON.stringify msg
+  # Message formatters
+  inbound: (socket, msg, done) -> done JSON.parse msg
+  outbound: (socket, msg, done) -> done JSON.stringify msg
 
-  # Validate/negotiate with socket before accepting messages
-  validate: (socket, msg, done) -> done (msg? and msg.protocol is 'ProtoSock')
-  # Handle invalid socket
-  invalid: (socket, msg) -> socket.close()
+  # Validation
+  validate: (socket, msg, done) -> done true
+  invalid: (socket, msg) ->
 
-  # Handle socket errors
-  error: (socket, err) ->
-    @emit 'error', err
-    return
-
-  # Handle formatted and valid socket message
+  # Socket handlers
+  connect: (socket) ->
   message: (socket, msg) ->
+  error: (socket, err) ->
+  close: (socket, reason) ->
 
+server = ps.createServer def
+```
 
-  # Extend the socket object
-  socket:
-    dostuff: ->
+## Client Usage
+
+```coffee-script
+def =
+  # Server options
+  options:
+    namespace: 'TestProtocol'
+    resource: 'default'
+
+  # Called on client construct
+  start: ->
+
+  # Message formatters
+  inbound: (socket, msg, done) -> done JSON.parse msg
+  outbound: (socket, msg, done) -> done JSON.stringify msg
+
+  # Validation
+  validate: (socket, msg, done) -> done true
+  invalid: (socket, msg) ->
+
+  # Socket handlers
+  connect: (socket) ->
+  message: (socket, msg) ->
+  error: (socket, err) ->
+  close: (socket, reason) ->
+
+client = ProtoSock.createClient def
 ```
 
 ## Examples
