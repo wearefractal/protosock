@@ -1,10 +1,11 @@
 util = require './util'
-throw 'ProtoSock server wis not for the browser' if isBrowser = util.isBrowser()
+isBrowser = util.isBrowser()
 
 engineServer = require 'engine.io'
 util.extendSocket engineServer.Socket
+{EventEmitter} = require 'events'
 
-class Server
+class Server extends EventEmitter
   constructor: (plugin) ->
     @[k]=v for k,v of plugin
     @isServer = true

@@ -3,12 +3,14 @@ isBrowser = util.isBrowser()
 
 if isBrowser
   engineClient = require 'node_modules/engine.io-client/lib/engine.io-client'
+  {EventEmitter} = engineClient
 else 
   engineClient = require 'engine.io-client'
+  {EventEmitter} = require 'events'
 
 util.extendSocket engineClient.Socket
 
-class Client
+class Client extends EventEmitter
   constructor: (plugin) ->
     @[k]=v for k,v of plugin
     @isServer = false
@@ -61,7 +63,4 @@ class Client
   # Handle socket close
   handleClose: (reason) => @close @ssocket, reason
 
-if isBrowser
-  window.ProtoSock = Client
-else
-  module.exports = Client
+module.exports = Client

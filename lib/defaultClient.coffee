@@ -17,8 +17,9 @@ util = require './util'
 isBrowser = util.isBrowser()
 
 if isBrowser
-  options.host = window.location.hostname
-  options.port = (if window.location.port.length > 0 then parseInt window.location.port else 80)
-  options.secure = (window.location.protocol is 'https:')
+  def.options = 
+    host: window.location.hostname
+    port: (if window.location.port.length > 0 then parseInt window.location.port else 80)
+    secure: (window.location.protocol is 'https:')
 
 module.exports = def

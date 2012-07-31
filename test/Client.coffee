@@ -11,7 +11,6 @@ TestProtocolServer = require './plugins/TestServer'
 TestProtocol = require './plugins/TestClient'
 
 describe 'Client', ->
-
   describe 'createClient()', ->
     it 'should construct from test protocol', (done) ->
       server = ProtoSock.createServer TestProtocolServer getServer()

@@ -1,11 +1,16 @@
-module.exports =
+util =
   extendSocket: (Socket) ->
     nu = require './Socket'
     Socket.prototype extends nu
 
   mergePlugins: (args...) ->
     newPlugin = {}
-    newPlugin extends plugin for plugin in args
+    for plugin in args
+      for k,v of plugin
+        if typeof v is 'object' and k isnt 'server'
+          newPlugin[k] = util.mergePlugins newPlugin[k], v
+        else
+          newPlugin[k] = v
     return newPlugin
 
   validatePlugin: (plugin) ->
@@ -23,8 +28,7 @@ module.exports =
   isBrowser: ->
     if window?
       return true
-    else if module? and global? and process?
-      return false
     else
-      console.log 'Unable to determine isBrowser'
       return false
+
+module.exports = util
