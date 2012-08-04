@@ -74,6 +74,7 @@ describe 'Server', ->
           should.exist next
           should.exist msg.test
           msg.test.should.equal 'test'
+          @disconnect()
           done()
         server = ProtoSock.createServer testProtocol
         client = getClient server
