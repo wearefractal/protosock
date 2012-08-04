@@ -10,8 +10,8 @@
    "dependencies":{
       "coffee-script":"*",
       "async":"*",
-      "engine.io":"0.1.0",
-      "engine.io-client":"0.1.0"
+      "engine.io":"0.1.2",
+      "engine.io-client":"0.1.2"
    },
    "devDependencies":{
       "mocha":"*",

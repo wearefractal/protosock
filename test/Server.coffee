@@ -33,7 +33,6 @@ describe 'Server', ->
         testProtocol.start = ->
           @isBrowser.should.be.false
           @isServer.should.be.true
-          @disconnect()
           done()
         server = ProtoSock.createServer testProtocol
 

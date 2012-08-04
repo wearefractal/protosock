@@ -41,6 +41,8 @@ function Socket (opts) {
   this.path = (opts.path || '/engine.io').replace(/\/$/, '');
   this.path += '/' + this.resource + '/';
   this.forceJSONP = !!opts.forceJSONP;
+  this.timestampParam = opts.timestampParam || 't';
+  this.timestampRequests = !!opts.timestampRequests;
   this.flashPath = opts.flashPath || '';
   this.transports = opts.transports || ['polling', 'websocket', 'flashsocket'];
   this.readyState = '';
@@ -79,6 +81,8 @@ Socket.prototype.createTransport = function (name) {
     , path: this.path
     , query: query
     , forceJSONP: this.forceJSONP
+    , timestampRequests: this.timestampRequests
+    , timestampParam: this.timestampParam
     , flashPath: this.flashPath
     , policyPort: this.policyPort
   });
@@ -581,6 +585,8 @@ function Transport (opts) {
   this.port = opts.port;
   this.secure = opts.secure;
   this.query = opts.query;
+  this.timestampParam = opts.timestampParam;
+  this.timestampRequests = opts.timestampRequests;
   this.readyState = '';
 };
 
@@ -850,7 +856,7 @@ exports.ua.hasCORS = 'undefined' != typeof XMLHttpRequest && (function () {
  * @api private
  */
 
-exports.ua.webkit = 'undefined' != typeof navigator &&
+exports.ua.webkit = 'undefined' != typeof navigator && 
   /webkit/i.test(navigator.userAgent);
 
 /**
@@ -861,6 +867,13 @@ exports.ua.webkit = 'undefined' != typeof navigator &&
 
 exports.ua.gecko = 'undefined' != typeof navigator && 
   /gecko/i.test(navigator.userAgent);
+
+/**
+ * Detect android;
+ */
+
+exports.ua.android = 'undefined' != typeof navigator && 
+  /android/i.test(navigator.userAgent);
 
 /**
  * XHR request helper.
@@ -1138,7 +1151,7 @@ EventEmitter.prototype.dispatchEvent = EventEmitter.prototype.emit;
  * @api public.
  */
 
-exports.version = '0.1.0';
+exports.version = '0.1.2';
 
 /**
  * Protocol version.
@@ -1214,7 +1227,6 @@ module.exports = Polling;
 
 function Polling (opts) {
   Transport.call(this, opts);
-  this.forceBust = !!opts.forceBust;
 }
 
 /**
@@ -1373,9 +1385,9 @@ Polling.prototype.uri = function () {
     , schema = this.secure ? 'https' : 'http'
     , port = ''
 
-  // cache busting for IE
-  if (global.ActiveXObject || this.forceBust) {
-    query.t = +new Date;
+  // cache busting is forced for IE / android
+  if (global.ActiveXObject || util.ua.android || this.timestampRequests) {
+    query[this.timestampParam] = +new Date;
   }
 
   query = util.qs(query);
@@ -2275,7 +2287,7 @@ WS.prototype.doClose = function () {
  */
 
 WS.prototype.uri = function () {
-  var query = util.qs(this.query)
+  var query = this.query || {}
     , schema = this.secure ? 'wss' : 'ws'
     , port = ''
 
@@ -2284,6 +2296,13 @@ WS.prototype.uri = function () {
     || ('ws' == schema && this.port != 80))) {
     port = ':' + this.port;
   }
+
+  // append timestamp to URI
+  if (this.timestampRequests) {
+    query[this.timestampParam] = +new Date;
+  }
+
+  query = util.qs(query);
 
   // prepend ? to query
   if (query.length) {
