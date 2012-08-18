@@ -2,8 +2,17 @@ def =
   options: {}
   start: ->
 
-  inbound: (socket, msg, done) -> done JSON.parse msg
-  outbound: (socket, msg, done) -> done JSON.stringify msg
+  inbound: (socket, msg, done) ->
+    try
+      done JSON.parse msg
+    catch e
+      @error e
+    
+  outbound: (socket, msg, done) ->
+    try
+      done JSON.stringify msg
+    catch e
+      @error e
 
   validate: (socket, msg, done) -> done true
   invalid: (socket, msg) ->
@@ -11,7 +20,7 @@ def =
   connect: (socket) ->
   message: (socket, msg) ->
   error: (socket, err) ->
-  close: (socket, reason) ->
+  close: (socket, reason) -> @emit 'close', reason
 
 util = require './util'
 isBrowser = util.isBrowser()
