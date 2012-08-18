@@ -10,6 +10,7 @@ ps =
     return new Client newPlugin
 
 `// if node`
+require("http").globalAgent.maxSockets = 999 # fix for multiple clients
 ps.createServer = (plugin) ->
   Server = require './Server'
   defaultServer = require './defaultServer'
