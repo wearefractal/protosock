@@ -26,9 +26,9 @@ util =
     return
 
   isBrowser: ->
-    if window?
-      return true
-    else
-      return false
+    `// if node`
+    return false
+    `// end`
+    return true
 
 module.exports = util
