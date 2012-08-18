@@ -41,7 +41,7 @@ class Client extends EventEmitter
     return
 
   # Disconnects socket
-  disconnect: => @ssocket.close(); @
+  disconnect: -> @ssocket.close(); @
 
   # Handle connection
   handleConnection: =>

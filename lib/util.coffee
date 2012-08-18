@@ -1,4 +1,4 @@
-util =
+module.exports = util =
   extendSocket: (Socket) ->
     nu = require './Socket'
     Socket.prototype extends nu
@@ -30,5 +30,3 @@ util =
     return false
     `// end`
     return true
-
-module.exports = util

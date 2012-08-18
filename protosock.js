@@ -2396,8 +2396,6 @@ Transport.prototype.onClose = function () {
 
       this.handleConnection = __bind(this.handleConnection, this);
 
-      this.disconnect = __bind(this.disconnect, this);
-
       var eiopts, k, v;
       for (k in plugin) {
         v = plugin[k];
@@ -2537,7 +2535,7 @@ Transport.prototype.onClose = function () {
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
 
-  util = {
+  module.exports = util = {
     extendSocket: function(Socket) {
       var nu;
       nu = require('./Socket');
@@ -2589,8 +2587,6 @@ Transport.prototype.onClose = function () {
     }
   };
 
-  module.exports = util;
-
 }).call(this);
 
 });require.register("defaultClient.js", function(module, exports, require, global){
@@ -2618,11 +2614,11 @@ Transport.prototype.onClose = function () {
     validate: function(socket, msg, done) {
       return done(true);
     },
-    invalid: function(socket, msg) {},
-    connect: function(socket) {},
-    message: function(socket, msg) {},
-    error: function(socket, err) {},
-    close: function(socket, reason) {}
+    invalid: function() {},
+    connect: function() {},
+    message: function() {},
+    error: function() {},
+    close: function() {}
   };
 
 

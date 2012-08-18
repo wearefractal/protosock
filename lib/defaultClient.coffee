@@ -15,12 +15,12 @@ def =
       @error e
 
   validate: (socket, msg, done) -> done true
-  invalid: (socket, msg) ->
+  invalid: -> #(socket, msg) ->
 
-  connect: (socket) ->
-  message: (socket, msg) ->
-  error: (socket, err) ->
-  close: (socket, reason) ->
+  connect: -> #(socket) ->
+  message: -> #(socket, msg) ->
+  error: -> #(socket, err) ->
+  close: -> #(socket, reason) ->
 
 `// if node`
 module.exports = def
