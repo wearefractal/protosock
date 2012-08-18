@@ -2436,16 +2436,20 @@ Transport.prototype.onClose = function () {
     };
 
     Client.prototype.handleConnection = function() {
+      this.connected = true;
       return this.connect(this.ssocket);
     };
 
     Client.prototype.handleMessage = function(msg) {
       var _this = this;
+      this.emit('inbound', this.ssocket, msg);
       return this.inbound(this.ssocket, msg, function(formatted) {
         return _this.validate(_this.ssocket, formatted, function(valid) {
-          if (valid === true) {
+          if (valid) {
+            _this.emit('message', _this.ssocket, formatted);
             return _this.message(_this.ssocket, formatted);
-          } else if (valid === false) {
+          } else {
+            _this.emit('invalid', _this.ssocket, formatted);
             return _this.invalid(_this.ssocket, formatted);
           }
         });
@@ -2460,6 +2464,7 @@ Transport.prototype.onClose = function () {
     };
 
     Client.prototype.handleClose = function(reason) {
+      this.emit('close', this.ssocket, reason);
       return this.close(this.ssocket, reason);
     };
 
@@ -2617,9 +2622,7 @@ Transport.prototype.onClose = function () {
     connect: function(socket) {},
     message: function(socket, msg) {},
     error: function(socket, err) {},
-    close: function(socket, reason) {
-      return this.emit('close', reason);
-    }
+    close: function(socket, reason) {}
   };
 
 

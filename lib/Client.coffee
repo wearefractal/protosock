@@ -44,15 +44,20 @@ class Client extends EventEmitter
   disconnect: => @ssocket.close(); @
 
   # Handle connection
-  handleConnection: => @connect @ssocket
+  handleConnection: =>
+    @connected = true
+    @connect @ssocket
 
   # Handle socket message
   handleMessage: (msg) =>
+    @emit 'inbound', @ssocket, msg
     @inbound @ssocket, msg, (formatted) =>
       @validate @ssocket, formatted, (valid) =>
-        if valid is true
+        if valid
+          @emit 'message', @ssocket, formatted
           @message @ssocket, formatted
-        else if valid is false
+        else
+          @emit 'invalid', @ssocket, formatted
           @invalid @ssocket, formatted
     
   # Handle socket error
@@ -61,6 +66,8 @@ class Client extends EventEmitter
     @error @ssocket, err
 
   # Handle socket close
-  handleClose: (reason) => @close @ssocket, reason
+  handleClose: (reason) =>
+    @emit 'close', @ssocket, reason
+    @close @ssocket, reason
 
 module.exports = Client

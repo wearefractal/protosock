@@ -20,6 +20,6 @@ def =
   connect: (socket) ->
   message: (socket, msg) ->
   error: (socket, err) ->
-  close: (socket, reason) -> @emit 'close', reason
+  close: (socket, reason) ->
 
 module.exports = def

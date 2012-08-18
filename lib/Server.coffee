@@ -28,6 +28,7 @@ class Server extends EventEmitter
     @server = engineServer.attach @options.server, eiopts
     @server.httpServer = @options.server
     @server.on 'connection', @handleConnection
+    @connected = true
     @start()
 
   # Closes HTTP server
@@ -47,11 +48,14 @@ class Server extends EventEmitter
 
   # Handle socket message
   handleMessage: (socket, msg) =>
+    @emit 'inbound', socket, msg
     @inbound socket, msg, (formatted) =>
       @validate socket, formatted, (valid) =>
-        if valid is true
+        if valid
+          @emit 'message', socket, formatted
           @message socket, formatted
-        else if valid is false
+        else
+          @emit 'invalid', socket, formatted
           @invalid socket, formatted
     
   # Handle socket error
@@ -60,6 +64,8 @@ class Server extends EventEmitter
     @error socket, err
 
   # Handle socket close
-  handleClose: (socket, reason) => @close socket, reason
+  handleClose: (socket, reason) =>
+    @emit 'close', socket, reason
+    @close socket, reason
 
 module.exports = Server
