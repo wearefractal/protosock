@@ -23,4 +23,4 @@ return
 `// end`
 
 window.ProtoSock = ps
-define(->ProtoSock) if typeof define is 'function'
+#define(->ProtoSock) if typeof define is 'function'
