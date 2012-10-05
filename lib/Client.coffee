@@ -67,15 +67,20 @@ class Client extends EventEmitter
 
   # Handle socket close
   handleClose: (reason) =>
+    @emit 'close', @ssocket, reason   
+    @close @ssocket, reason
+    ###
     @reconnect (worked) =>
       return if worked
       @emit 'close', @ssocket, reason
       @close @ssocket, reason
-
+    ###
+  ###
   reconnect: (cb) =>
     attempts = 0
     connect = =>
       ++attempts
       return cb false if attempts is 10
+  ###
 
 module.exports = Client

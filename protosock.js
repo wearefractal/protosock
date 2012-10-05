@@ -2355,13 +2355,16 @@ Transport.prototype.onClose = function () {
     write: function(msg) {
       var _this = this;
       this.parent.outbound(this, msg, function(formatted) {
-        var _ref;
-        if (_this.connected === true) {
-          return _this.send(formatted);
-        } else {
-          return ((_ref = _this.buffer) != null ? _ref : _this.buffer = []).push(formatted);
-        }
+        return _this.send(formatted);
       });
+      /*
+          @parent.outbound @, msg, (formatted) =>
+            if @connected is true
+              @send formatted
+            else
+              (@buffer?=[]).push formatted
+      */
+
       return this;
     },
     disconnect: function() {
@@ -2401,8 +2404,6 @@ Transport.prototype.onClose = function () {
     __extends(Client, _super);
 
     function Client(plugin) {
-      this.reconnect = __bind(this.reconnect, this);
-
       this.handleClose = __bind(this.handleClose, this);
 
       this.handleError = __bind(this.handleError, this);
@@ -2477,27 +2478,25 @@ Transport.prototype.onClose = function () {
     };
 
     Client.prototype.handleClose = function(reason) {
-      var _this = this;
-      return this.reconnect(function(worked) {
-        if (worked) {
-          return;
-        }
-        _this.emit('close', _this.ssocket, reason);
-        return _this.close(_this.ssocket, reason);
-      });
+      this.emit('close', this.ssocket, reason);
+      return this.close(this.ssocket, reason);
+      /*
+          @reconnect (worked) =>
+            return if worked
+            @emit 'close', @ssocket, reason
+            @close @ssocket, reason
+      */
+
     };
 
-    Client.prototype.reconnect = function(cb) {
-      var attempts, connect,
-        _this = this;
-      attempts = 0;
-      return connect = function() {
-        ++attempts;
-        if (attempts === 10) {
-          return cb(false);
-        }
-      };
-    };
+    /*
+      reconnect: (cb) =>
+        attempts = 0
+        connect = =>
+          ++attempts
+          return cb false if attempts is 10
+    */
+
 
     return Client;
 
