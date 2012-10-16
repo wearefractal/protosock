@@ -2495,7 +2495,23 @@ exports.qs = function (obj) {
     Client.prototype.handleClose = function(reason) {
       this.emit('close', this.ssocket, reason);
       return this.close(this.ssocket, reason);
+      /*
+          @reconnect (worked) =>
+            return if worked
+            @emit 'close', @ssocket, reason
+            @close @ssocket, reason
+      */
+
     };
+
+    /*
+      reconnect: (cb) =>
+        attempts = 0
+        connect = =>
+          ++attempts
+          return cb false if attempts is 10
+    */
+
 
     return Client;
 
@@ -2552,6 +2568,10 @@ exports.qs = function (obj) {
     port: (window.location.port.length > 0 ? parseInt(window.location.port) : 80),
     secure: window.location.protocol === 'https:'
   };
+
+  if (def.options.secure) {
+    def.options.port = 443;
+  }
 
   module.exports = def;
 
@@ -2617,6 +2637,14 @@ exports.qs = function (obj) {
       this.parent.outbound(this, msg, function(formatted) {
         return _this.send(formatted);
       });
+      /*
+          @parent.outbound @, msg, (formatted) =>
+            if @connected is true
+              @send formatted
+            else
+              (@buffer?=[]).push formatted
+      */
+
       return this;
     },
     disconnect: function() {
