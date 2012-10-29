@@ -4,15 +4,19 @@ def =
 
   inbound: (socket, msg, done) ->
     try
-      done JSON.parse msg
+      parsed = JSON.parse msg
     catch e
       @error socket, e
+    done parsed
+    return done
 
   outbound: (socket, msg, done) ->
     try
-      done JSON.stringify msg
+      parsed = JSON.stringify msg
     catch e
       @error socket, e
+    done parsed
+    return
 
   validate: (socket, msg, done) -> done true
   invalid: -> #(socket, msg) ->
