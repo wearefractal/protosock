@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Protosock by wearefractal</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Protosock</h1>
+        <p class="header">Framework for building network protocols</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/wearefractal/protosock/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/wearefractal/protosock/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/wearefractal/protosock">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/wearefractal">wearefractal</a></p>
+
+
+      </header>
+      <section>
+        <p><img src="https://secure.travis-ci.org/wearefractal/protosock.png?branch=master" alt="status"></p>
+
+<h2>Information</h2>
+
+<table>
+<tr>
+<td>Package</td>
+<td>protosock</td>
+</tr>
+<tr>
+<td>Description</td>
+<td>Framework for creating websocket-based protocols</td>
+</tr>
+<tr>
+<td>Node Version</td>
+<td>&gt;= 0.6</td>
+</tr>
+</table><p>ProtoSock uses ES5 features so be sure to include es5shim on your page.</p>
+
+<h2>Server Usage</h2>
+
+<div class="highlight"><pre><span class="nv">ps = </span><span class="nx">require</span> <span class="s">'protosock'</span>
+<span class="nv">plugin =</span>
+  <span class="c1"># Server default options</span>
+  <span class="nv">options:</span>
+    <span class="nv">namespace: </span><span class="s">'TestProtocol'</span>
+    <span class="nv">resource: </span><span class="s">'default'</span>
+
+  <span class="c1"># Called on server construct</span>
+  <span class="nv">start: </span><span class="o">-&gt;</span>
+
+  <span class="c1"># Message formatters</span>
+  <span class="nv">inbound: </span><span class="nf">(socket, msg, done) -&gt;</span> <span class="nx">done</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span> <span class="nx">msg</span>
+  <span class="nv">outbound: </span><span class="nf">(socket, msg, done) -&gt;</span> <span class="nx">done</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span> <span class="nx">msg</span>
+
+  <span class="c1"># Validation</span>
+  <span class="nv">validate: </span><span class="nf">(socket, msg, done) -&gt;</span> <span class="nx">done</span> <span class="kc">true</span>
+  <span class="nv">invalid: </span><span class="nf">(socket, msg) -&gt;</span>
+
+  <span class="c1"># Socket handlers</span>
+  <span class="nv">connect: </span><span class="nf">(socket) -&gt;</span>
+  <span class="nv">message: </span><span class="nf">(socket, msg) -&gt;</span>
+  <span class="nv">error: </span><span class="nf">(socket, err) -&gt;</span>
+  <span class="nv">close: </span><span class="nf">(socket, reason) -&gt;</span>
+
+<span class="nv">options =</span>
+  <span class="nv">resources: </span><span class="s">'coolpath'</span>
+
+<span class="nv">server = </span><span class="nx">ps</span><span class="p">.</span><span class="nx">createServer</span> <span class="nx">httpServer</span><span class="p">,</span> <span class="nx">plugin</span><span class="p">,</span> <span class="nx">options</span>
+</pre></div>
+
+<h2>Client Usage</h2>
+
+<div class="highlight"><pre><span class="nv">plugin =</span>
+  <span class="c1"># Client default options</span>
+  <span class="nv">options:</span>
+    <span class="nv">namespace: </span><span class="s">'TestProtocol'</span>
+    <span class="nv">resource: </span><span class="s">'default'</span>
+
+  <span class="c1"># Called on client construct</span>
+  <span class="nv">start: </span><span class="o">-&gt;</span>
+
+  <span class="c1"># Message formatters</span>
+  <span class="nv">inbound: </span><span class="nf">(socket, msg, done) -&gt;</span> <span class="nx">done</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span> <span class="nx">msg</span>
+  <span class="nv">outbound: </span><span class="nf">(socket, msg, done) -&gt;</span> <span class="nx">done</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span> <span class="nx">msg</span>
+
+  <span class="c1"># Validation</span>
+  <span class="nv">validate: </span><span class="nf">(socket, msg, done) -&gt;</span> <span class="nx">done</span> <span class="kc">true</span>
+  <span class="nv">invalid: </span><span class="nf">(socket, msg) -&gt;</span>
+
+  <span class="c1"># Socket handlers</span>
+  <span class="nv">connect: </span><span class="nf">(socket) -&gt;</span>
+  <span class="nv">message: </span><span class="nf">(socket, msg) -&gt;</span>
+  <span class="nv">error: </span><span class="nf">(socket, err) -&gt;</span>
+  <span class="nv">close: </span><span class="nf">(socket, reason) -&gt;</span>
+
+<span class="nv">options =</span>
+  <span class="nv">resources: </span><span class="s">'coolpath'</span>
+
+<span class="nv">client = </span><span class="nx">ProtoSock</span><span class="p">.</span><span class="nx">createClient</span> <span class="nx">plugin</span><span class="p">,</span> <span class="nx">options</span>
+</pre></div>
+
+<h2>LICENSE</h2>
+
+<p>(MIT License)</p>
+
+<p>Copyright (c) 2012 Fractal <a href="mailto:contact@wearefractal.com">contact@wearefractal.com</a></p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
