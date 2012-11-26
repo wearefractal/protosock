@@ -22,10 +22,9 @@ ProtoSock uses ES5 features so be sure to include es5shim on your page.
 
 ```coffee-script
 ps = require 'protosock'
-def =
-  # Server options
+plugin =
+  # Server default options
   options:
-    server: httpServer
     namespace: 'TestProtocol'
     resource: 'default'
 
@@ -46,14 +45,17 @@ def =
   error: (socket, err) ->
   close: (socket, reason) ->
 
-server = ps.createServer def
+options =
+  resources: 'coolpath'
+
+server = ps.createServer httpServer, plugin, options
 ```
 
 ## Client Usage
 
 ```coffee-script
-def =
-  # Server options
+plugin =
+  # Client default options
   options:
     namespace: 'TestProtocol'
     resource: 'default'
@@ -75,7 +77,10 @@ def =
   error: (socket, err) ->
   close: (socket, reason) ->
 
-client = ProtoSock.createClient def
+options =
+  resources: 'coolpath'
+
+client = ProtoSock.createClient plugin, options
 ```
 
 ## LICENSE

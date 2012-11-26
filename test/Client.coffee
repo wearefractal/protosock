@@ -13,7 +13,7 @@ TestProtocol = require './plugins/TestClient'
 describe 'Client', ->
   describe 'createClient()', ->
     it 'should construct from test protocol', (done) ->
-      server = ProtoSock.createServer TestProtocolServer getServer()
+      server = ProtoSock.createServer getServer(), TestProtocolServer()
       testProtocol = TestProtocol server
       client = ProtoSock.createClient testProtocol
       should.exist client
@@ -22,7 +22,7 @@ describe 'Client', ->
   describe 'plugin interaction', ->
     describe 'start()', ->
       it 'should call when client is created', (done) ->
-        server = ProtoSock.createServer TestProtocolServer getServer()
+        server = ProtoSock.createServer getServer(), TestProtocolServer()
         testProtocol = TestProtocol server
         testProtocol.start = ->
           @isBrowser.should.be.false
@@ -32,18 +32,18 @@ describe 'Client', ->
 
     describe 'connect()', ->
       it 'should call when socket is connected', (done) ->
-        server = ProtoSock.createServer TestProtocolServer getServer()
+        server = ProtoSock.createServer getServer(), TestProtocolServer()
         testProtocol = TestProtocol server
         testProtocol.connect = -> done()
         client = ProtoSock.createClient testProtocol
 
     describe 'inbound()', ->
       it 'should call when server sends a message', (done) ->
-        tp = TestProtocolServer getServer()
+        tp = TestProtocolServer()
         tp.connect = (socket) ->
           should.exist socket
           socket.write test: 'test'
-        server = ProtoSock.createServer tp
+        server = ProtoSock.createServer getServer(), tp
 
         testProtocol = TestProtocol server
         testProtocol.inbound = (socket, msg, next) ->
@@ -57,7 +57,7 @@ describe 'Client', ->
 
     describe 'outbound()', ->
       it 'should call when client sends a message', (done) ->
-        server = ProtoSock.createServer TestProtocolServer getServer()
+        server = ProtoSock.createServer getServer(), TestProtocolServer()
         testProtocol = TestProtocol server
         testProtocol.outbound = (socket, msg, next) ->
           should.exist socket
@@ -73,14 +73,14 @@ describe 'Client', ->
 
     describe 'write()', ->
       it 'should call when client sends a message', (done) ->
-        tp = TestProtocolServer getServer()
+        tp = TestProtocolServer()
         tp.message = (socket, msg) ->
           should.exist socket
           should.exist msg
           should.exist msg.test
           msg.test.should.equal 'test'
           done()
-        server = ProtoSock.createServer tp
+        server = ProtoSock.createServer getServer(), tp
 
         testProtocol = TestProtocol server
         testProtocol.connect = (socket) ->
@@ -90,11 +90,11 @@ describe 'Client', ->
 
     describe 'validate()', ->
       it 'should call when server sends a message', (done) ->
-        tp = TestProtocolServer getServer()
+        tp = TestProtocolServer()
         tp.connect = (socket) ->
           should.exist socket
           socket.write test: 'test'
-        serv = ProtoSock.createServer tp
+        serv = ProtoSock.createServer getServer(), tp
 
         testProtocol = TestProtocol serv
         testProtocol.validate = (socket, msg, next) ->
@@ -108,11 +108,11 @@ describe 'Client', ->
 
     describe 'invalid()', ->
       it 'should call when server sends a message and validate returns false', (done) ->
-        tp = TestProtocolServer getServer()
+        tp = TestProtocolServer()
         tp.connect = (socket) ->
           should.exist socket
           socket.write test: 'test'
-        server = ProtoSock.createServer tp
+        server = ProtoSock.createServer getServer(), tp
 
         testProtocol = TestProtocol server
         testProtocol.validate = (socket, msg, validate) -> validate false
@@ -126,12 +126,12 @@ describe 'Client', ->
 
     describe 'message()', ->
       it 'should call when server sends a message and validate returns true', (done) ->
-        tp = TestProtocolServer getServer()
+        tp = TestProtocolServer()
         tp.validate = (socket, msg, validate) -> validate true
         tp.connect = (socket) ->
           should.exist socket
           socket.write test: 'test'
-        server = ProtoSock.createServer tp
+        server = ProtoSock.createServer getServer(), tp
 
         testProtocol = TestProtocol server
         testProtocol.message = (socket, msg) ->
@@ -144,7 +144,7 @@ describe 'Client', ->
 
     describe 'error()', ->
       it 'should call when socket emits an error', (done) ->
-        server = ProtoSock.createServer TestProtocolServer getServer()
+        server = ProtoSock.createServer getServer(), TestProtocolServer()
         testProtocol = TestProtocol server
         testProtocol.connect = (socket) -> socket.emit 'error', 'test'
         testProtocol.error = (socket, err) ->
@@ -157,7 +157,7 @@ describe 'Client', ->
 
     describe 'close()', ->
       it 'should call when socket closes', (done) ->
-        server = ProtoSock.createServer TestProtocolServer getServer()
+        server = ProtoSock.createServer getServer(), TestProtocolServer()
         testProtocol = TestProtocol server
         testProtocol.connect = (socket) -> @disconnect()
         testProtocol.close = (socket, reason) ->

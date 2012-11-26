@@ -6,12 +6,13 @@ util.extendSocket engineServer.Socket
 {EventEmitter} = require 'events'
 
 class Server extends EventEmitter
-  constructor: (plugin) ->
+  constructor: (@httpServer, plugin, options={}) ->
     @[k]=v for k,v of plugin
+    @options[k]=v for k,v of options
     @isServer = true
     @isClient = false
     @isBrowser = isBrowser
-    throw 'server option required' unless @options.server?
+    throw 'httpServer required' unless @httpServer?
 
     eiopts =
       path: "/#{@options.namespace}"
@@ -25,8 +26,8 @@ class Server extends EventEmitter
       pingInterval: @options.ping?.interval
       debug: @options.debug
 
-    @server = engineServer.attach @options.server, eiopts
-    @server.httpServer = @options.server
+    @server = engineServer.attach @httpServer, eiopts
+    @server.httpServer = @httpServer
     @server.on 'connection', @handleConnection
     @connected = true
     @start()

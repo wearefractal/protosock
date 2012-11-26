@@ -11,8 +11,9 @@ else
 util.extendSocket engineClient.Socket
 
 class Client extends EventEmitter
-  constructor: (plugin) ->
+  constructor: (plugin, options={}) ->
     @[k]=v for k,v of plugin
+    @options[k]=v for k,v of options
     @isServer = false
     @isClient = true
     @isBrowser = isBrowser

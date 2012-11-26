@@ -15,40 +15,47 @@ getClient = (srv) ->
 
 TestProtocol = require './plugins/TestServer'
 
+getId = =>
+  rand = -> (((1 + Math.random()) * 0x10000000) | 0).toString 16
+  rand()+rand()+rand()
+getOpt = ->
+  namespace: 'HelloWorld'
+  resource: getId()
+
 describe 'Server', ->
   beforeEach -> httpServer.listen 9091
   afterEach -> httpServer.close()
 
   describe 'createServer()', ->
     it 'should construct from test protocol', (done) ->
-      testProtocol = TestProtocol httpServer
-      server = ProtoSock.createServer testProtocol
+      testProtocol = TestProtocol()
+      server = ProtoSock.createServer httpServer, testProtocol, getOpt()
       should.exist server
       done()
 
   describe 'plugin interaction', ->
     describe 'start()', ->
       it 'should call when server is created', (done) ->
-        testProtocol = TestProtocol httpServer
+        testProtocol = TestProtocol()
         testProtocol.start = ->
           @isBrowser.should.be.false
           @isServer.should.be.true
           done()
-        server = ProtoSock.createServer testProtocol
+        server = ProtoSock.createServer httpServer, testProtocol, getOpt()
 
     describe 'connect()', ->
       it 'should call when socket is connected', (done) ->
-        testProtocol = TestProtocol httpServer
+        testProtocol = TestProtocol()
         testProtocol.connect = (socket) ->
           should.exist socket
           @disconnect()
           done()
-        server = ProtoSock.createServer testProtocol
+        server = ProtoSock.createServer httpServer, testProtocol, getOpt()
         client = getClient server
 
     describe 'inbound()', ->
       it 'should call when socket sends a message', (done) ->
-        testProtocol = TestProtocol httpServer
+        testProtocol = TestProtocol()
         testProtocol.inbound = (socket, msg, next) ->
           should.exist socket
           should.exist msg
@@ -56,14 +63,14 @@ describe 'Server', ->
           msg.should.equal JSON.stringify test: 'test'
           @disconnect()
           done()
-        server = ProtoSock.createServer testProtocol
+        server = ProtoSock.createServer httpServer, testProtocol, getOpt()
         client = getClient server
         client.on 'open', ->
           client.send JSON.stringify test: 'test'
 
     describe 'outbound()', ->
       it 'should call when server sends a message', (done) ->
-        testProtocol = TestProtocol httpServer
+        testProtocol = TestProtocol()
         testProtocol.connect = (socket) ->
           should.exist socket
           socket.write test: 'test'
@@ -76,12 +83,12 @@ describe 'Server', ->
           msg.test.should.equal 'test'
           @disconnect()
           done()
-        server = ProtoSock.createServer testProtocol
+        server = ProtoSock.createServer httpServer, testProtocol, getOpt()
         client = getClient server
 
     describe 'validate()', ->
       it 'should call when socket sends a message', (done) ->
-        testProtocol = TestProtocol httpServer
+        testProtocol = TestProtocol()
         testProtocol.validate = (socket, msg, validate) ->
           should.exist socket
           should.exist msg
@@ -90,14 +97,14 @@ describe 'Server', ->
           msg.test.should.equal 'test'
           @disconnect()
           done()
-        server = ProtoSock.createServer testProtocol
+        server = ProtoSock.createServer httpServer, testProtocol, getOpt()
         client = getClient server
         client.on 'open', ->
           client.send JSON.stringify test: 'test'
 
     describe 'invalid()', ->
       it 'should call when socket sends a message and validate returns false', (done) ->
-        testProtocol = TestProtocol httpServer
+        testProtocol = TestProtocol()
         testProtocol.validate = (socket, msg, validate) -> validate false
         testProtocol.invalid = (socket, msg) ->
           should.exist socket
@@ -106,14 +113,14 @@ describe 'Server', ->
           msg.test.should.equal 'test'
           @disconnect()
           done()
-        server = ProtoSock.createServer testProtocol
+        server = ProtoSock.createServer httpServer, testProtocol, getOpt()
         client = getClient server
         client.on 'open', ->
           client.send JSON.stringify test: 'test'
 
     describe 'message()', ->
       it 'should call when socket sends a message and validate returns true', (done) ->
-        testProtocol = TestProtocol httpServer
+        testProtocol = TestProtocol()
         testProtocol.validate = (socket, msg, validate) -> validate true
         testProtocol.message = (socket, msg) ->
           should.exist socket
@@ -122,14 +129,14 @@ describe 'Server', ->
           msg.test.should.equal 'test'
           @disconnect()
           done()
-        server = ProtoSock.createServer testProtocol
+        server = ProtoSock.createServer httpServer, testProtocol, getOpt()
         client = getClient server
         client.on 'open', ->
           client.send JSON.stringify test: 'test'
 
     describe 'error()', ->
       it 'should call when socket emits an error', (done) ->
-        testProtocol = TestProtocol httpServer
+        testProtocol = TestProtocol()
         testProtocol.connect = (socket) -> socket.emit 'error', 'test'
         testProtocol.error = (socket, err) ->
           should.exist socket
@@ -139,12 +146,12 @@ describe 'Server', ->
           @disconnect()
           done()
 
-        server = ProtoSock.createServer testProtocol
+        server = ProtoSock.createServer httpServer, testProtocol, getOpt()
         client = getClient server
 
     describe 'close()', ->
       it 'should call when socket closes', (done) ->
-        testProtocol = TestProtocol httpServer
+        testProtocol = TestProtocol()
         testProtocol.connect = (socket) -> socket.close()
         testProtocol.close = (socket, reason) ->
           should.exist socket
@@ -152,5 +159,5 @@ describe 'Server', ->
           @disconnect()
           done()
 
-        server = ProtoSock.createServer testProtocol
+        server = ProtoSock.createServer httpServer, testProtocol, getOpt()
         client = getClient server
