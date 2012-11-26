@@ -21,7 +21,7 @@ class Server extends EventEmitter
       cookie: @options.cookie
       policyFile: @options.policyFile
       allowUpgrades: @options.upgrades?.allow
-      destroyUpgrade: @options.upgrades?.destroy
+      destroyUpgrade: false
       pingTimeout: @options.ping?.timeout
       pingInterval: @options.ping?.interval
       debug: @options.debug
