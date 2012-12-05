@@ -29,7 +29,6 @@ class Server extends EventEmitter
     @server = engineServer.attach @httpServer, eiopts
     @server.httpServer = @httpServer
     @server.on 'connection', @handleConnection
-    @connected = true
     @start()
 
   # Closes HTTP server

@@ -10,10 +10,21 @@ else
 
 util.extendSocket engineClient.Socket
 
+getDelay = (a) ->
+  if a > 10
+    return 15000
+  else if a > 5
+    return 5000
+  else if a > 3
+    return 1000
+  return 1000
+
 class Client extends EventEmitter
   constructor: (plugin, options={}) ->
     @[k]=v for k,v of plugin
     @options[k]=v for k,v of options
+    @options.reconnect ?= true
+    @options.reconnectLimit ?= Infinity
     @isServer = false
     @isClient = true
     @isBrowser = isBrowser
@@ -34,7 +45,7 @@ class Client extends EventEmitter
 
     @ssocket = new engineClient.Socket eiopts
     @ssocket.parent = @
-    @ssocket.on 'open', @handleConnection
+    @ssocket.once 'open', @handleConnection
     @ssocket.on 'error', @handleError
     @ssocket.on 'message', @handleMessage
     @ssocket.on 'close', @handleClose
@@ -42,11 +53,11 @@ class Client extends EventEmitter
     return
 
   # Disconnects socket
-  disconnect: -> @ssocket.close(); @
+  disconnect: -> @ssocket.disconnect(); @
 
   # Handle connection
   handleConnection: =>
-    @connected = true
+    @emit 'connected'
     @connect @ssocket
 
   # Handle socket message
@@ -68,20 +79,43 @@ class Client extends EventEmitter
 
   # Handle socket close
   handleClose: (reason) =>
-    @emit 'close', @ssocket, reason   
-    @close @ssocket, reason
-    ###
-    @reconnect (worked) =>
-      return if worked
+    return if @ssocket.reconnecting
+    if @options.reconnect
+      @reconnect (err) =>
+        return unless err?
+        @emit 'close', @ssocket, reason
+        @close @ssocket, reason
+    else
       @emit 'close', @ssocket, reason
       @close @ssocket, reason
-    ###
-  ###
+
   reconnect: (cb) =>
+    return cb "Already reconnecting" if @ssocket.reconnecting
+    @ssocket.reconnecting = true
+    @ssocket.disconnect() if @ssocket.readyState is 'open'
+    maxAttempts = @options.reconnectLimit
     attempts = 0
+
+    done = =>
+      @ssocket.reconnecting = false
+      cb()
+
+    err = (e) =>
+      @ssocket.reconnecting = false
+      cb e
+
+    @ssocket.once 'open', done
+    #@ssocket.once 'error', err
+
     connect = =>
-      ++attempts
-      return cb false if attempts is 10
-  ###
+      return unless @ssocket.reconnecting # already done
+      console.log attempts, maxAttempts
+      return err "Exceeded max attempts" if attempts >= maxAttempts
+      # keep trying
+      attempts++
+      @ssocket.open() if @ssocket.transport.readyState isnt 'opening'
+
+      setTimeout connect, getDelay attempts
+    setTimeout connect, getDelay attempts
 
 module.exports = Client

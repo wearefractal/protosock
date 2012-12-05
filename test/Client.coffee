@@ -159,9 +159,64 @@ describe 'Client', ->
       it 'should call when socket closes', (done) ->
         server = ProtoSock.createServer getServer(), TestProtocolServer()
         testProtocol = TestProtocol server
+        testProtocol.options.reconnect = false
         testProtocol.connect = (socket) -> @disconnect()
         testProtocol.close = (socket, reason) ->
           should.exist socket
           should.exist reason
           done()
+        client = ProtoSock.createClient testProtocol
+
+    describe 'reconnect()', ->
+      it 'should work', (done) ->
+        @timeout 5000
+        tp = TestProtocolServer()
+        tp.message = (socket, msg) ->
+          should.exist socket
+          should.exist msg
+          should.exist msg.test
+          msg.test.should.equal 'test'
+          done()
+        server = ProtoSock.createServer getServer(), tp
+
+        testProtocol = TestProtocol server
+        testProtocol.connect = (socket) ->
+          should.exist socket
+          client.reconnect (err) ->
+            should.not.exist err
+            socket.write test: 'test'
+        client = ProtoSock.createClient testProtocol
+
+      it 'should fail after X attempts', (done) ->
+        @timeout 5000
+        tp = TestProtocolServer()
+        tp.connect = ->
+          server.destroy()
+        server = ProtoSock.createServer getServer(), tp
+
+        testProtocol = TestProtocol server
+        testProtocol.options.reconnectLimit = 2
+        testProtocol.connect = (socket) ->
+          should.exist socket
+          socket.write test: 'test'
+        testProtocol.close = ->
+          done()
+        client = ProtoSock.createClient testProtocol
+
+      it 'should call on close and buffer messages', (done) ->
+        @timeout 5000
+        tp = TestProtocolServer()
+        tp.message = (socket, msg) ->
+          should.exist socket
+          should.exist msg
+          should.exist msg.test
+          msg.test.should.equal 'test'
+          done()
+        server = ProtoSock.createServer getServer(), tp
+
+        testProtocol = TestProtocol server
+        testProtocol.connect = (socket) ->
+          should.exist socket
+          client.disconnect()
+          socket.write test: 'test'
         client = ProtoSock.createClient testProtocol
