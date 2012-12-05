@@ -109,11 +109,10 @@ class Client extends EventEmitter
 
     connect = =>
       return unless @ssocket.reconnecting # already done
-      console.log attempts, maxAttempts
       return err "Exceeded max attempts" if attempts >= maxAttempts
       # keep trying
       attempts++
-      @ssocket.open() if @ssocket.transport.readyState isnt 'opening'
+      @ssocket.open()
 
       setTimeout connect, getDelay attempts
     setTimeout connect, getDelay attempts

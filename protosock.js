@@ -2625,14 +2625,11 @@ exports.qs = function (obj) {
         if (!_this.ssocket.reconnecting) {
           return;
         }
-        console.log(attempts, maxAttempts);
         if (attempts >= maxAttempts) {
           return err("Exceeded max attempts");
         }
         attempts++;
-        if (_this.ssocket.transport.readyState !== 'opening') {
-          _this.ssocket.open();
-        }
+        _this.ssocket.open();
         return setTimeout(connect, getDelay(attempts));
       };
       return setTimeout(connect, getDelay(attempts));
