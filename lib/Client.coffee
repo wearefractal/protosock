@@ -4,7 +4,7 @@ isBrowser = util.isBrowser()
 if isBrowser
   engineClient = require 'node_modules/engine.io-client/lib/engine.io-client'
   {EventEmitter} = engineClient
-else 
+else
   engineClient = require 'engine.io-client'
   {EventEmitter} = require 'events'
 
@@ -71,7 +71,7 @@ class Client extends EventEmitter
         else
           @emit 'invalid', @ssocket, formatted
           @invalid @ssocket, formatted
-    
+
   # Handle socket error
   handleError: (err) =>
     err = new Error err if typeof err is 'string'
@@ -90,6 +90,7 @@ class Client extends EventEmitter
       @close @ssocket, reason
 
   reconnect: (cb) =>
+    cb ||= ->
     return cb "Already reconnecting" if @ssocket.reconnecting
     @ssocket.reconnecting = true
     @ssocket.disconnect() if @ssocket.readyState is 'open'
@@ -98,6 +99,7 @@ class Client extends EventEmitter
 
     done = =>
       @ssocket.reconnecting = false
+      @handleConnection(@ssocket)
       cb()
 
     err = (e) =>
