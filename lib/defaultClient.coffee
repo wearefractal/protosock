@@ -8,7 +8,7 @@ def =
     catch e
       @error socket, e
     done parsed
-    return done
+    return
 
   outbound: (socket, msg, done) ->
     try
