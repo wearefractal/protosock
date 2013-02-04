@@ -2546,6 +2546,8 @@ exports.global = function () {
 
   module.exports = Client;
 
+  module.exports.emitter = EventEmitter;
+
 }).call(this);
 
 });require.register("defaultClient.js", function(module, exports, require, global){

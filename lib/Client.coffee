@@ -118,3 +118,4 @@ class Client extends EventEmitter
     setTimeout connect, getDelay attempts
 
 module.exports = Client
+module.exports.emitter = EventEmitter
