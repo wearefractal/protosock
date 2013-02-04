@@ -4,7 +4,6 @@ build: components lib
 	@component build --standalone ProtoSock
 	@mv build/build.js protosock.js
 	@rm -rf build
-	@rm -rf dist
 	@node_modules/.bin/uglifyjs -nc --unsafe -mt -o protosock.min.js protosock.js
 	@echo "File size (minified): " && cat protosock.min.js | wc -c
 	@echo "File size (gzipped): " && cat protosock.min.js | gzip -9f  | wc -c
