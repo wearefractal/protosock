@@ -1,6 +1,4 @@
 util = require './util'
-isBrowser = util.isBrowser()
-
 engineServer = require 'engine.io'
 util.extendSocket engineServer.Socket
 {EventEmitter} = require 'events'
@@ -11,7 +9,7 @@ class Server extends EventEmitter
     @options[k]=v for k,v of options
     @isServer = true
     @isClient = false
-    @isBrowser = isBrowser
+    @isBrowser = false
     throw 'httpServer required' unless @httpServer?
 
     eiopts =

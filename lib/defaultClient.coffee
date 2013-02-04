@@ -26,14 +26,11 @@ def =
   error: -> #(socket, err) ->
   close: -> #(socket, reason) ->
 
-`// if node`
-module.exports = def
-return
-`// end`
+if window?
+  def.options =
+    host: window.location.hostname
+    port: (if window.location.port.length > 0 then parseInt window.location.port else 80)
+    secure: (window.location.protocol is 'https:')
+  def.options.port = 443 if def.options.secure
 
-def.options =
-  host: window.location.hostname
-  port: (if window.location.port.length > 0 then parseInt window.location.port else 80)
-  secure: (window.location.protocol is 'https:')
-def.options.port = 443 if def.options.secure
 module.exports = def

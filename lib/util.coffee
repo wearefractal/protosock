@@ -1,6 +1,7 @@
-module.exports = util =
+nu = require './Socket'
+
+util =
   extendSocket: (Socket) ->
-    nu = require './Socket'
     Socket.prototype extends nu
 
   mergePlugins: (args...) ->
@@ -13,8 +14,4 @@ module.exports = util =
           newPlugin[k] = v
     return newPlugin
 
-  isBrowser: ->
-    `// if node`
-    return false
-    `// end`
-    return true
+module.exports = util

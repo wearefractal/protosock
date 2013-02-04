@@ -1,4 +1,4 @@
-module.exports =
+sock =
   write: (msg) ->
     @parent.outbound @, msg, (fmt) => @send fmt
     return @
@@ -6,3 +6,6 @@ module.exports =
   disconnect: (r) -> 
     @close r
     return @
+
+
+module.exports = sock

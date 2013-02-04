@@ -1,10 +1,8 @@
 util = require './util'
-isBrowser = util.isBrowser()
 
-if isBrowser
-  engineClient = require 'node_modules/engine.io-client/lib/index.js'
-  {Emitter} = engineClient
-  EventEmitter = Emitter
+if window?
+  engineClient = require 'engine.io'
+  EventEmitter = require 'emitter'
 else 
   engineClient = require 'engine.io-client'
   {EventEmitter} = require 'events'
@@ -28,7 +26,7 @@ class Client extends EventEmitter
     @options.reconnectLimit ?= Infinity
     @isServer = false
     @isClient = true
-    @isBrowser = isBrowser
+    @isBrowser = window?
 
     eiopts =
       host: @options.host
@@ -44,7 +42,7 @@ class Client extends EventEmitter
       forceBust: @options.forceBust
       debug: @options.debug
 
-    @ssocket = new engineClient.Socket eiopts
+    @ssocket = new engineClient eiopts
     @ssocket.parent = @
     @ssocket.once 'open', @handleConnection
     @ssocket.on 'error', @handleError
@@ -119,4 +117,3 @@ class Client extends EventEmitter
     setTimeout connect, getDelay attempts
 
 module.exports = Client
-module.exports.EventEmitter = EventEmitter

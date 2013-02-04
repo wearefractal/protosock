@@ -5,12 +5,6 @@ require 'mocha'
 vm = require 'vm'
 
 describe 'util', ->
-  describe 'isBrowser()', ->
-    it 'should return false under node', (done) ->
-      res = util.isBrowser()
-      should.exist res
-      res.should.be.false
-      done()
     ###
     it 'should return true under browser', (done) ->
       # emulate a browser
