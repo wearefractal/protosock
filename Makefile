@@ -1,4 +1,5 @@
 build: components lib
+	@rm -rf dist
 	@mkdir dist
 	@coffee -o dist/ -c lib/main.coffee lib/defaultClient.coffee lib/Client.coffee lib/Socket.coffee lib/util.coffee
 	@component build --standalone ProtoSock
