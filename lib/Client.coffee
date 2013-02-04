@@ -2,8 +2,9 @@ util = require './util'
 isBrowser = util.isBrowser()
 
 if isBrowser
-  engineClient = require 'node_modules/engine.io-client/lib/engine.io-client'
-  {EventEmitter} = engineClient
+  engineClient = require 'node_modules/engine.io-client/lib/index.js'
+  {Emitter} = engineClient
+  EventEmitter = Emitter
 else 
   engineClient = require 'engine.io-client'
   {EventEmitter} = require 'events'
@@ -118,4 +119,4 @@ class Client extends EventEmitter
     setTimeout connect, getDelay attempts
 
 module.exports = Client
-module.exports.emitter = EventEmitter
+module.exports.EventEmitter = EventEmitter
