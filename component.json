@@ -3,7 +3,7 @@
   "version": "0.1.8",
   "dependencies": {
     "component/emitter": "*",
-    "LearnBoost/engine.io-client": "0.4.1"
+    "LearnBoost/engine.io-client": "*"
   },
   "main": "dist/main.js",
   "scripts": [
