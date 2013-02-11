@@ -3059,7 +3059,7 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
     __extends(Client, _super);
 
     function Client(plugin, options) {
-      var eiopts, k, v, _base, _base1, _ref, _ref1;
+      var eiopts, k, v, _base, _base1, _base2, _ref, _ref1, _ref2;
       if (options == null) {
         options = {};
       }
@@ -3086,6 +3086,9 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
       }
       if ((_ref1 = (_base1 = this.options).reconnectLimit) == null) {
         _base1.reconnectLimit = Infinity;
+      }
+      if ((_ref2 = (_base2 = this.options).reconnectTimeout) == null) {
+        _base2.reconnectTimeout = Infinity;
       }
       this.isServer = false;
       this.isClient = true;
@@ -3167,7 +3170,7 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
     };
 
     Client.prototype.reconnect = function(cb) {
-      var attempts, connect, done, err, maxAttempts,
+      var attempts, connect, done, err, maxAttempts, start, timeout,
         _this = this;
       if (this.ssocket.reconnecting) {
         return cb("Already reconnecting");
@@ -3176,10 +3179,13 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
       if (this.ssocket.readyState === 'open') {
         this.ssocket.disconnect();
       }
+      start = Date.now();
       maxAttempts = this.options.reconnectLimit;
+      timeout = this.options.reconnectTimeout;
       attempts = 0;
       done = function() {
         _this.ssocket.reconnecting = false;
+        _this.emit("reconnected");
         return cb();
       };
       err = function(e) {
@@ -3193,6 +3199,9 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
         }
         if (attempts >= maxAttempts) {
           return err("Exceeded max attempts");
+        }
+        if ((Date.now() - start) > timeout) {
+          return err("Timeout on reconnect");
         }
         attempts++;
         _this.ssocket.open();

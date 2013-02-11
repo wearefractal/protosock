@@ -24,6 +24,7 @@ class Client extends EventEmitter
     @options[k]=v for k,v of options
     @options.reconnect ?= true
     @options.reconnectLimit ?= Infinity
+    @options.reconnectTimeout ?= Infinity
     @isServer = false
     @isClient = true
     @isBrowser = window?
@@ -92,11 +93,14 @@ class Client extends EventEmitter
     return cb "Already reconnecting" if @ssocket.reconnecting
     @ssocket.reconnecting = true
     @ssocket.disconnect() if @ssocket.readyState is 'open'
+    start = Date.now()
     maxAttempts = @options.reconnectLimit
+    timeout = @options.reconnectTimeout
     attempts = 0
 
     done = =>
       @ssocket.reconnecting = false
+      @emit "reconnected"
       cb()
 
     err = (e) =>
@@ -109,6 +113,7 @@ class Client extends EventEmitter
     connect = =>
       return unless @ssocket.reconnecting # already done
       return err "Exceeded max attempts" if attempts >= maxAttempts
+      return err "Timeout on reconnect" if (Date.now()-start) > timeout
       # keep trying
       attempts++
       @ssocket.open()

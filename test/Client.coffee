@@ -203,6 +203,21 @@ describe 'Client', ->
           done()
         client = ProtoSock.createClient testProtocol
 
+      it 'should fail after X seconds', (done) ->
+        tp = TestProtocolServer()
+        tp.connect = ->
+          server.destroy()
+        server = ProtoSock.createServer getServer(), tp
+
+        testProtocol = TestProtocol server
+        testProtocol.options.reconnectTimeout = 500
+        testProtocol.connect = (socket) ->
+          should.exist socket
+          socket.write test: 'test'
+        testProtocol.close = ->
+          done()
+        client = ProtoSock.createClient testProtocol
+
       it 'should call on close and buffer messages', (done) ->
         @timeout 5000
         tp = TestProtocolServer()
