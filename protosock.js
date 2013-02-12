@@ -3122,6 +3122,13 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
       return this;
     };
 
+    Client.prototype.destroy = function() {
+      this.options.reconnect = false;
+      this.ssocket.disconnect();
+      this.emit("destroyed");
+      return this;
+    };
+
     Client.prototype.handleConnection = function() {
       this.emit('connected');
       return this.connect(this.ssocket);
