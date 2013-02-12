@@ -187,6 +187,25 @@ describe 'Client', ->
             socket.write test: 'test'
         client = ProtoSock.createClient testProtocol
 
+      it 'should emit events properly', (done) ->
+        @timeout 5000
+        tp = TestProtocolServer()
+        tp.message = (socket, msg) ->
+          should.exist socket
+          should.exist msg
+          should.exist msg.test
+          msg.test.should.equal 'test'
+        server = ProtoSock.createServer getServer(), tp
+
+        testProtocol = TestProtocol server
+        testProtocol.connect = (socket) ->
+          should.exist socket
+          client.reconnect (err) ->
+            should.not.exist err
+            socket.write test: 'test'
+        client = ProtoSock.createClient testProtocol
+        client.on "reconnected", done
+
       it 'should fail after X attempts', (done) ->
         @timeout 5000
         tp = TestProtocolServer()
