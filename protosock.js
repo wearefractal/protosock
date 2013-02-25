@@ -217,7 +217,7 @@ module.exports = Emitter;
 
 /**
  * Initialize a new `Emitter`.
- * 
+ *
  * @api public
  */
 
@@ -290,7 +290,9 @@ Emitter.prototype.once = function(event, fn){
  * @api public
  */
 
-Emitter.prototype.off = function(event, fn){
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners = function(event, fn){
   this._callbacks = this._callbacks || {};
   var callbacks = this._callbacks[event];
   if (!callbacks) return this;
@@ -312,7 +314,7 @@ Emitter.prototype.off = function(event, fn){
  *
  * @param {String} event
  * @param {Mixed} ...
- * @return {Emitter} 
+ * @return {Emitter}
  */
 
 Emitter.prototype.emit = function(event){
@@ -354,7 +356,6 @@ Emitter.prototype.listeners = function(event){
 Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
-
 
 });
 require.register("LearnBoost-engine.io-protocol/lib/index.js", function(exports, require, module){
