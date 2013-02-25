@@ -3,7 +3,7 @@ util = require './util'
 if window?
   engineClient = require 'engine.io'
   EventEmitter = require 'emitter'
-else 
+else
   engineClient = require 'engine.io-client'
   {EventEmitter} = require 'events'
 
@@ -53,10 +53,14 @@ class Client extends EventEmitter
     return
 
   # Disconnects socket
-  disconnect: -> @ssocket.disconnect(); @
+  disconnect: (temporary) ->
+    @options.reconnect = false unless temporary
+    @ssocket.disconnect() if @ssocket.readyState in ['open', 'opening']
+    return @
+
   destroy: ->
     @options.reconnect = false
-    @ssocket.disconnect()
+    @disconnect()
     @emit "destroyed"
     return @
 
@@ -76,7 +80,7 @@ class Client extends EventEmitter
         else
           @emit 'invalid', @ssocket, formatted
           @invalid @ssocket, formatted
-    
+
   # Handle socket error
   handleError: (err) =>
     err = new Error err if typeof err is 'string'
@@ -97,7 +101,7 @@ class Client extends EventEmitter
   reconnect: (cb) =>
     return cb "Already reconnecting" if @ssocket.reconnecting
     @ssocket.reconnecting = true
-    @ssocket.disconnect() if @ssocket.readyState is 'open'
+    @disconnect()
     start = Date.now()
     maxAttempts = @options.reconnectLimit
     timeout = @options.reconnectTimeout

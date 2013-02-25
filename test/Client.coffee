@@ -238,7 +238,7 @@ describe 'Client', ->
         client = ProtoSock.createClient testProtocol
 
       it 'should call on close and buffer messages', (done) ->
-        @timeout 5000
+        @timeout 2000
         tp = TestProtocolServer()
         tp.message = (socket, msg) ->
           should.exist socket
@@ -251,6 +251,6 @@ describe 'Client', ->
         testProtocol = TestProtocol server
         testProtocol.connect = (socket) ->
           should.exist socket
-          client.disconnect()
+          client.disconnect true
           socket.write test: 'test'
         client = ProtoSock.createClient testProtocol
