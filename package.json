@@ -11,8 +11,8 @@
       "coffee-script":"*",
       "async":"*",
       "emitter-component": "*",
-      "engine.io":"0.4.1",
-      "engine.io-client":"0.4.1"
+      "engine.io":"*",
+      "engine.io-client":"*"
    },
    "devDependencies":{
       "mocha":"*",

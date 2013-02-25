@@ -2,7 +2,7 @@
   "name": "protosock",
   "version": "0.2.2",
   "dependencies": {
-    "component/emitter": "*",
+    "component/emitter": "0.0.6",
     "LearnBoost/engine.io-client": "*"
   },
   "main": "dist/main.js",
