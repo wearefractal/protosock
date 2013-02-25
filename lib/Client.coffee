@@ -55,7 +55,7 @@ class Client extends EventEmitter
   # Disconnects socket
   disconnect: (temporary) ->
     @options.reconnect = false unless temporary
-    @ssocket.disconnect() if @ssocket.readyState is 'open'
+    @ssocket.disconnect() if @ssocket.readyState in ['open', 'opening']
     return @
 
   destroy: ->
