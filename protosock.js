@@ -358,193 +358,6 @@ Emitter.prototype.hasListeners = function(event){
 };
 
 });
-require.register("LearnBoost-engine.io-protocol/lib/index.js", function(exports, require, module){
-/**
- * Module dependencies.
- */
-
-var keys = require('./keys')
-
-/**
- * Packet types.
- */
-
-var packets = exports.packets = {
-    open:     0    // non-ws
-  , close:    1    // non-ws
-  , ping:     2
-  , pong:     3
-  , message:  4
-  , upgrade:  5
-  , noop:     6
-};
-
-var packetslist = keys(packets);
-
-/**
- * Premade error packet.
- */
-
-var err = { type: 'error', data: 'parser error' }
-
-/**
- * Encodes a packet.
- *
- *     <packet type id> [ `:` <data> ]
- *
- * Example:
- *
- *     5:hello world
- *     3
- *     4
- *
- * @api private
- */
-
-exports.encodePacket = function (packet) {
-  var encoded = packets[packet.type];
-
-  // data fragment is optional
-  if (undefined !== packet.data) {
-    encoded += String(packet.data);
-  }
-
-  return '' + encoded;
-};
-
-/**
- * Decodes a packet.
- *
- * @return {Object} with `type` and `data` (if any)
- * @api private
- */
-
-exports.decodePacket = function (data) {
-  var type = data.charAt(0);
-
-  if (Number(type) != type || !packetslist[type]) {
-    return err;
-  }
-
-  if (data.length > 1) {
-    return { type: packetslist[type], data: data.substring(1) };
-  } else {
-    return { type: packetslist[type] };
-  }
-};
-
-/**
- * Encodes multiple messages (payload).
- * 
- *     <length>:data
- *
- * Example:
- *
- *     11:hello world2:hi
- *
- * @param {Array} packets
- * @api private
- */
-
-exports.encodePayload = function (packets) {
-  if (!packets.length) {
-    return '0:';
-  }
-
-  var encoded = ''
-    , message
-
-  for (var i = 0, l = packets.length; i < l; i++) {
-    message = exports.encodePacket(packets[i]);
-    encoded += message.length + ':' + message;
-  }
-
-  return encoded;
-};
-
-/*
- * Decodes data when a payload is maybe expected.
- *
- * @param {String} data, callback method
- * @return {NaN} 
- * @api public
- */
-
-exports.decodePayload = function (data, callback) {
-  var packet;
-  if (data == '') {
-    // parser error - ignoring payload
-    return callback(packet, true);
-  }
-
-  var length = ''
-    , n, msg;
-
-  for (var i = 0, l = data.length; i < l; i++) {
-    var chr = data.charAt(i);
-
-    if (':' != chr) {
-      length += chr;
-    } else {
-      if ('' == length || (length != (n = Number(length)))) {
-        // parser error - ignoring payload
-        return callback(packet, true);
-      }
-
-      msg = data.substr(i + 1, n);
-
-      if (length != msg.length) {
-        // parser error - ignoring payload
-        return callback(packet, true);
-      }
-
-      if (msg.length) {
-        packet = exports.decodePacket(msg);
-
-        if (err.type == packet.type && err.data == packet.data) {
-          // parser error in individual packet - ignoring payload
-          return callback(packet, true);
-        }
-
-        return callback(packet, i + n == l - 1);
-      }
-
-      // advance cursor
-      i += n;
-      length = '';
-    }
-  }
-
-  if (length != '') {
-    // parser error - ignoring payload
-    return callback(packet, true);
-  }
-
-};
-
-});
-require.register("LearnBoost-engine.io-protocol/lib/keys.js", function(exports, require, module){
-
-/**
- * Gets the keys for an object.
- *
- * @return {Array} keys
- * @api private
- */
-
-module.exports = Object.keys || function keys (obj){
-  var arr = [];
-  var has = Object.prototype.hasOwnProperty;
-
-  for (var i in obj) {
-    if (has.call(obj, i)) {
-      arr.push(i);
-    }
-  }
-  return arr;
-};
-
-});
 require.register("visionmedia-debug/index.js", function(exports, require, module){
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
@@ -606,9 +419,7 @@ debug.skips = [];
  */
 
 debug.enable = function(name) {
-  try {
-    localStorage.debug = name;
-  } catch(e){}
+  localStorage.debug = name;
 
   var split = (name || '').split(/[\s,]+/)
     , len = split.length;
@@ -678,19 +489,176 @@ debug.enabled = function(name) {
 // persist
 
 if (window.localStorage) debug.enable(localStorage.debug);
-
 });
 require.register("LearnBoost-engine.io-client/lib/index.js", function(exports, require, module){
 
 module.exports = require('./socket');
 
+});
+require.register("LearnBoost-engine.io-client/lib/parser.js", function(exports, require, module){
 /**
- * Exports parser
- *
- * @api public
- *
+ * Module dependencies.
  */
-module.exports.parser = require('engine.io-parser');
+
+var util = require('./util')
+
+/**
+ * Packet types.
+ */
+
+var packets = exports.packets = {
+    open:     0    // non-ws
+  , close:    1    // non-ws
+  , ping:     2
+  , pong:     3
+  , message:  4
+  , upgrade:  5
+  , noop:     6
+};
+
+var packetslist = util.keys(packets);
+
+/**
+ * Premade error packet.
+ */
+
+var err = { type: 'error', data: 'parser error' }
+
+/**
+ * Encodes a packet.
+ *
+ *     <packet type id> [ `:` <data> ]
+ *
+ * Example:
+ *
+ *     5:hello world
+ *     3
+ *     4
+ *
+ * @api private
+ */
+
+exports.encodePacket = function (packet) {
+  var encoded = packets[packet.type]
+
+  // data fragment is optional
+  if (undefined !== packet.data) {
+    encoded += String(packet.data);
+  }
+
+  return '' + encoded;
+};
+
+/**
+ * Decodes a packet.
+ *
+ * @return {Object} with `type` and `data` (if any)
+ * @api private
+ */
+
+exports.decodePacket = function (data) {
+  var type = data.charAt(0);
+
+  if (Number(type) != type || !packetslist[type]) {
+    return err;
+  }
+
+  if (data.length > 1) {
+    return { type: packetslist[type], data: data.substring(1) };
+  } else {
+    return { type: packetslist[type] };
+  }
+};
+
+/**
+ * Encodes multiple messages (payload).
+ * 
+ *     <length>:data
+ *
+ * Example:
+ *
+ *     11:hello world2:hi
+ *
+ * @param {Array} packets
+ * @api private
+ */
+
+exports.encodePayload = function (packets) {
+  if (!packets.length) {
+    return '0:';
+  }
+
+  var encoded = ''
+    , message
+
+  for (var i = 0, l = packets.length; i < l; i++) {
+    message = exports.encodePacket(packets[i]);
+    encoded += message.length + ':' + message;
+  }
+
+  return encoded;
+};
+
+/*
+ * Decodes data when a payload is maybe expected.
+ *
+ * @param {String} data
+ * @return {Array} packets
+ * @api public
+ */
+
+exports.decodePayload = function (data) {
+  if (data == '') {
+    // parser error - ignoring payload
+    return [err];
+  }
+
+  var packets = []
+    , length = ''
+    , n, msg, packet
+
+  for (var i = 0, l = data.length; i < l; i++) {
+    var chr = data.charAt(i)
+
+    if (':' != chr) {
+      length += chr;
+    } else {
+      if ('' == length || (length != (n = Number(length)))) {
+        // parser error - ignoring payload
+        return [err];
+      }
+
+      msg = data.substr(i + 1, n);
+
+      if (length != msg.length) {
+        // parser error - ignoring payload
+        return [err];
+      }
+
+      if (msg.length) {
+        packet = exports.decodePacket(msg);
+
+        if (err.type == packet.type && err.data == packet.data) {
+          // parser error in individual packet - ignoring payload
+          return [err];
+        }
+
+        packets.push(packet);
+      }
+
+      // advance cursor
+      i += n;
+      length = ''
+    }
+  }
+
+  if (length != '') {
+    // parser error - ignoring payload
+    return [err];
+  }
+
+  return packets;
+};
 
 });
 require.register("LearnBoost-engine.io-client/lib/socket.js", function(exports, require, module){
@@ -755,6 +723,7 @@ function Socket(uri, opts){
        location.port :
        (this.secure ? 443 : 80));
   this.query = opts.query || {};
+  this.query.uid = rnd();
   this.upgrade = false !== opts.upgrade;
   this.path = (opts.path || '/engine.io').replace(/\/$/, '') + '/';
   this.forceJSONP = !!opts.forceJSONP;
@@ -802,7 +771,7 @@ Socket.Transport = require('./transport');
 Socket.Emitter = require('./emitter');
 Socket.transports = require('./transports');
 Socket.util = require('./util');
-Socket.parser = require('engine.io-parser');
+Socket.parser = require('./parser');
 
 /**
  * Creates transport of the given type.
@@ -1059,7 +1028,7 @@ Socket.prototype.onHandshake = function (data) {
   this.emit('handshake', data);
   this.id = data.sid;
   this.transport.query.sid = data.sid;
-  this.upgrades = this.filterUpgrades(data.upgrades);
+  this.upgrades = data.upgrades;
   this.pingInterval = data.pingInterval;
   this.pingTimeout = data.pingTimeout;
   this.onOpen();
@@ -1182,7 +1151,7 @@ Socket.prototype.onError = function (err) {
  */
 
 Socket.prototype.onClose = function (reason, desc) {
-  if ('opening' == this.readyState || 'open' == this.readyState) {
+  if ('open' == this.readyState) {
     debug('socket close with reason: "%s"', reason);
     clearTimeout(this.pingIntervalTimer);
     clearTimeout(this.pingTimeoutTimer);
@@ -1194,20 +1163,15 @@ Socket.prototype.onClose = function (reason, desc) {
 };
 
 /**
- * Filters upgrades, returning only those matching client transports.
- * 
- * @param {Array} server upgrades
- * @api private
+ * Generates a random uid.
  *
+ * @api private
  */
 
-Socket.prototype.filterUpgrades = function (upgrades) {
-  var filteredUpgrades = [];
-  for (var i = 0, j = upgrades.length; i<j; i++) {
-    if (~this.transports.indexOf(upgrades[i])) filteredUpgrades.push(upgrades[i]);
-  }
-  return filteredUpgrades;
-};
+function rnd () {
+  return String(Math.random()).substr(5) + String(Math.random()).substr(5);
+}
+
 });
 require.register("LearnBoost-engine.io-client/lib/transport.js", function(exports, require, module){
 
@@ -1216,7 +1180,7 @@ require.register("LearnBoost-engine.io-client/lib/transport.js", function(export
  */
 
 var util = require('./util')
-  , parser = require('engine.io-parser')
+  , parser = require('./parser')
   , Emitter = require('./emitter');
 
 /**
@@ -1409,21 +1373,12 @@ Emitter.prototype.removeAllListeners = function(){
 
 });
 require.register("LearnBoost-engine.io-client/lib/util.js", function(exports, require, module){
+
 /**
  * Status of page load.
  */
 
 var pageLoaded = false;
-
-/**
- * Returns the global object
- *
- * @api private
- */
-
-exports.global = function () {
-  return 'undefined' != typeof window ? window : global;
-};
 
 /**
  * Inheritance.
@@ -1681,6 +1636,16 @@ exports.qs = function (obj) {
   return str;
 };
 
+/**
+ * Returns the global object
+ *
+ * @api private
+ */
+
+exports.global = function () {
+  return 'undefined' != typeof window ? window : global;
+};
+
 });
 require.register("LearnBoost-engine.io-client/lib/transports/index.js", function(exports, require, module){
 
@@ -1754,7 +1719,7 @@ require.register("LearnBoost-engine.io-client/lib/transports/polling.js", functi
 
 var Transport = require('../transport')
   , util = require('../util')
-  , parser = require('engine.io-parser')
+  , parser = require('../parser')
   , debug = require('debug')('engine.io-client:polling');
 
 /**
@@ -2271,7 +2236,7 @@ module.exports = JSONPPolling;
  * Global reference.
  */
 
-var global = util.global();
+var global = util.global()
 
 /**
  * Cached regular expressions.
@@ -2374,7 +2339,6 @@ JSONPPolling.prototype.doClose = function () {
  */
 
 JSONPPolling.prototype.doPoll = function () {
-	var self = this;
   var script = document.createElement('script');
 
   if (this.script) {
@@ -2384,14 +2348,10 @@ JSONPPolling.prototype.doPoll = function () {
 
   script.async = true;
   script.src = this.uri();
-	script.onerror = function(e){
-		self.onError('jsonp poll error',e);
-	}
 
   var insertAt = document.getElementsByTagName('script')[0];
   insertAt.parentNode.insertBefore(script, insertAt);
   this.script = script;
-
 
   if (util.ua.gecko) {
     setTimeout(function () {
@@ -2414,10 +2374,10 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
   var self = this;
 
   if (!this.form) {
-    var form = document.createElement('form');
-    var area = document.createElement('textarea');
-    var id = this.iframeId = 'eio_iframe_' + this.index;
-    var iframe;
+    var form = document.createElement('form')
+      , area = document.createElement('textarea')
+      , id = this.iframeId = 'eio_iframe_' + this.index
+      , iframe;
 
     form.className = 'socketio';
     form.style.position = 'absolute';
@@ -2443,21 +2403,15 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 
   function initIframe () {
     if (self.iframe) {
-      try {
-        self.form.removeChild(self.iframe);
-      } catch (e) {
-        self.onError('jsonp polling iframe removal error', e);
-      }
+      self.form.removeChild(self.iframe);
     }
 
     try {
       // ie6 dynamic iframes with target="" support (thanks Chris Lambacher)
-      var html = '<iframe src="javascript:0" name="'+ self.iframeId +'">';
-      iframe = document.createElement(html);
+      iframe = document.createElement('<iframe name="'+ self.iframeId +'">');
     } catch (e) {
       iframe = document.createElement('iframe');
       iframe.name = self.iframeId;
-      iframe.src = 'javascript:0';
     }
 
     iframe.id = self.iframeId;
@@ -2494,7 +2448,7 @@ require.register("LearnBoost-engine.io-client/lib/transports/websocket.js", func
  */
 
 var Transport = require('../transport')
-  , parser = require('engine.io-parser')
+  , parser = require('../parser')
   , util = require('../util')
   , debug = require('debug')('engine.io-client:websocket');
 
@@ -2911,6 +2865,7 @@ function load (arr, fn) {
 
 });
 require.register("protosock/dist/main.js", function(exports, require, module){
+// Generated by CoffeeScript 1.4.0
 (function() {
   var Client, Server, defaultClient, defaultServer, ps, util;
 
@@ -2955,6 +2910,7 @@ require.register("protosock/dist/main.js", function(exports, require, module){
 
 });
 require.register("protosock/dist/Socket.js", function(exports, require, module){
+// Generated by CoffeeScript 1.4.0
 (function() {
   var sock;
 
@@ -2978,11 +2934,12 @@ require.register("protosock/dist/Socket.js", function(exports, require, module){
 
 });
 require.register("protosock/dist/util.js", function(exports, require, module){
+// Generated by CoffeeScript 1.4.0
 (function() {
   var nu, util,
-    __hasProp = Object.prototype.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; },
-    __slice = Array.prototype.slice;
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __slice = [].slice;
 
   nu = require('./Socket');
 
@@ -3015,6 +2972,7 @@ require.register("protosock/dist/util.js", function(exports, require, module){
 
 });
 require.register("protosock/dist/defaultClient.js", function(exports, require, module){
+// Generated by CoffeeScript 1.4.0
 (function() {
   var def;
 
@@ -3055,7 +3013,9 @@ require.register("protosock/dist/defaultClient.js", function(exports, require, m
       port: (window.location.port.length > 0 ? parseInt(window.location.port) : 80),
       secure: window.location.protocol === 'https:'
     };
-    if (def.options.secure) def.options.port = 443;
+    if (def.options.secure) {
+      def.options.port = 443;
+    }
   }
 
   module.exports = def;
@@ -3064,11 +3024,12 @@ require.register("protosock/dist/defaultClient.js", function(exports, require, m
 
 });
 require.register("protosock/dist/Client.js", function(exports, require, module){
+// Generated by CoffeeScript 1.4.0
 (function() {
   var Client, EventEmitter, engineClient, getDelay, util,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-    __hasProp = Object.prototype.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   util = require('./util');
 
@@ -3098,13 +3059,20 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
     __extends(Client, _super);
 
     function Client(plugin, options) {
-      var eiopts, k, v, _base, _base2, _base3;
-      if (options == null) options = {};
+      var eiopts, k, v, _base, _base1, _base2, _ref, _ref1, _ref2;
+      if (options == null) {
+        options = {};
+      }
       this.reconnect = __bind(this.reconnect, this);
+
       this.handleClose = __bind(this.handleClose, this);
+
       this.handleError = __bind(this.handleError, this);
+
       this.handleMessage = __bind(this.handleMessage, this);
+
       this.handleConnection = __bind(this.handleConnection, this);
+
       for (k in plugin) {
         v = plugin[k];
         this[k] = v;
@@ -3113,12 +3081,14 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
         v = options[k];
         this.options[k] = v;
       }
-      if ((_base = this.options).reconnect == null) _base.reconnect = true;
-      if ((_base2 = this.options).reconnectLimit == null) {
-        _base2.reconnectLimit = Infinity;
+      if ((_ref = (_base = this.options).reconnect) == null) {
+        _base.reconnect = true;
       }
-      if ((_base3 = this.options).reconnectTimeout == null) {
-        _base3.reconnectTimeout = Infinity;
+      if ((_ref1 = (_base1 = this.options).reconnectLimit) == null) {
+        _base1.reconnectLimit = Infinity;
+      }
+      if ((_ref2 = (_base2 = this.options).reconnectTimeout) == null) {
+        _base2.reconnectTimeout = Infinity;
       }
       this.isServer = false;
       this.isClient = true;
@@ -3147,15 +3117,14 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
       return;
     }
 
-    Client.prototype.disconnect = function(temporary) {
-      if (!temporary) this.options.reconnect = false;
-      if (this.ssocket.readyState === 'open') this.ssocket.disconnect();
+    Client.prototype.disconnect = function() {
+      this.ssocket.disconnect();
       return this;
     };
 
     Client.prototype.destroy = function() {
       this.options.reconnect = false;
-      this.disconnect();
+      this.ssocket.disconnect();
       this.emit("destroyed");
       return this;
     };
@@ -3182,16 +3151,22 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
     };
 
     Client.prototype.handleError = function(err) {
-      if (typeof err === 'string') err = new Error(err);
+      if (typeof err === 'string') {
+        err = new Error(err);
+      }
       return this.error(this.ssocket, err);
     };
 
     Client.prototype.handleClose = function(reason) {
       var _this = this;
-      if (this.ssocket.reconnecting) return;
+      if (this.ssocket.reconnecting) {
+        return;
+      }
       if (this.options.reconnect) {
         return this.reconnect(function(err) {
-          if (err == null) return;
+          if (err == null) {
+            return;
+          }
           _this.emit('close', _this.ssocket, reason);
           return _this.close(_this.ssocket, reason);
         });
@@ -3204,9 +3179,13 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
     Client.prototype.reconnect = function(cb) {
       var attempts, connect, done, err, maxAttempts, start, timeout,
         _this = this;
-      if (this.ssocket.reconnecting) return cb("Already reconnecting");
+      if (this.ssocket.reconnecting) {
+        return cb("Already reconnecting");
+      }
       this.ssocket.reconnecting = true;
-      this.disconnect();
+      if (this.ssocket.readyState === 'open') {
+        this.ssocket.disconnect();
+      }
       start = Date.now();
       maxAttempts = this.options.reconnectLimit;
       timeout = this.options.reconnectTimeout;
@@ -3222,9 +3201,15 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
       };
       this.ssocket.once('open', done);
       connect = function() {
-        if (!_this.ssocket.reconnecting) return;
-        if (attempts >= maxAttempts) return err("Exceeded max attempts");
-        if ((Date.now() - start) > timeout) return err("Timeout on reconnect");
+        if (!_this.ssocket.reconnecting) {
+          return;
+        }
+        if (attempts >= maxAttempts) {
+          return err("Exceeded max attempts");
+        }
+        if ((Date.now() - start) > timeout) {
+          return err("Timeout on reconnect");
+        }
         attempts++;
         _this.ssocket.open();
         return setTimeout(connect, getDelay(attempts));
@@ -3244,6 +3229,7 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
 require.alias("component-emitter/index.js", "protosock/deps/emitter/index.js");
 
 require.alias("LearnBoost-engine.io-client/lib/index.js", "protosock/deps/engine.io/lib/index.js");
+require.alias("LearnBoost-engine.io-client/lib/parser.js", "protosock/deps/engine.io/lib/parser.js");
 require.alias("LearnBoost-engine.io-client/lib/socket.js", "protosock/deps/engine.io/lib/socket.js");
 require.alias("LearnBoost-engine.io-client/lib/transport.js", "protosock/deps/engine.io/lib/transport.js");
 require.alias("LearnBoost-engine.io-client/lib/emitter.js", "protosock/deps/engine.io/lib/emitter.js");
@@ -3256,11 +3242,6 @@ require.alias("LearnBoost-engine.io-client/lib/transports/websocket.js", "protos
 require.alias("LearnBoost-engine.io-client/lib/transports/flashsocket.js", "protosock/deps/engine.io/lib/transports/flashsocket.js");
 require.alias("LearnBoost-engine.io-client/lib/index.js", "protosock/deps/engine.io/index.js");
 require.alias("component-emitter/index.js", "LearnBoost-engine.io-client/deps/emitter/index.js");
-
-require.alias("LearnBoost-engine.io-protocol/lib/index.js", "LearnBoost-engine.io-client/deps/engine.io-parser/lib/index.js");
-require.alias("LearnBoost-engine.io-protocol/lib/keys.js", "LearnBoost-engine.io-client/deps/engine.io-parser/lib/keys.js");
-require.alias("LearnBoost-engine.io-protocol/lib/index.js", "LearnBoost-engine.io-client/deps/engine.io-parser/index.js");
-require.alias("LearnBoost-engine.io-protocol/lib/index.js", "LearnBoost-engine.io-protocol/index.js");
 
 require.alias("visionmedia-debug/index.js", "LearnBoost-engine.io-client/deps/debug/index.js");
 require.alias("visionmedia-debug/debug.js", "LearnBoost-engine.io-client/deps/debug/debug.js");
