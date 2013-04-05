@@ -3,7 +3,7 @@ should = require 'should'
 require 'mocha'
 
 httpServer = require('http').createServer()
-httpServer.setMaxListeners -1
+httpServer.setMaxListeners 0
 
 engineClient = require 'engine.io-client'
 getClient = (srv) ->
