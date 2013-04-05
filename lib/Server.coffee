@@ -55,7 +55,7 @@ class Server extends EventEmitter
         else
           @emit 'invalid', socket, formatted
           @invalid socket, formatted
-    
+
   # Handle socket error
   handleError: (socket, err) =>
     err = new Error err if typeof err is 'string'
@@ -63,7 +63,7 @@ class Server extends EventEmitter
 
   # Handle socket close
   handleClose: (socket, reason) =>
-    @emit 'close', socket, reason
     @close socket, reason
+    @emit 'close', socket, reason
 
 module.exports = Server

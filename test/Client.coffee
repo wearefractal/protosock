@@ -254,3 +254,21 @@ describe 'Client', ->
           client.disconnect true
           socket.write test: 'test'
         client = ProtoSock.createClient testProtocol
+
+      it 'should destroy connection', (done) ->
+        verify = ->
+          should.exist server?.server?.clientsCount, 'expected clientsCount at close'
+          server.server.clientsCount.should.eql 0
+          done()
+
+        server = ProtoSock.createServer getServer(), TestProtocolServer()
+        server.on 'close', (err) ->
+          setImmediate verify
+
+        testProtocol = TestProtocol server
+        testProtocol.connect = (socket) ->
+          should.exist server?.server?.clientsCount, 'expected clientsCount at connect'
+          server.server.clientsCount.should.eql 1
+          client.destroy()
+
+        client = ProtoSock.createClient testProtocol
