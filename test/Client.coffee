@@ -263,7 +263,7 @@ describe 'Client', ->
 
         server = ProtoSock.createServer getServer(), TestProtocolServer()
         server.on 'close', (err) ->
-          setImmediate verify
+          setTimeout verify, 1
 
         testProtocol = TestProtocol server
         testProtocol.connect = (socket) ->
