@@ -83,6 +83,22 @@ options =
 client = ProtoSock.createClient plugin, options
 ```
 
+### Client Disconnect
+
+This will disconnect the socket connection.  By default the 'reconnect' option is set to true, so the client will immediately try to re-establish the connection.
+
+```coffee-script
+client.disconnect()
+```
+
+### Client Destroy
+
+This will set 'reconnect' to false and then disconnect the socket.  This results in a permanent disconnection, so it should be used for cleaning up unused clients. (e.g. in an automated test cleanup step)
+
+```coffee-script
+client.destroy()
+```
+
 ## LICENSE
 
 (MIT License)
