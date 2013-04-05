@@ -1,7 +1,7 @@
 {
    "name":"protosock",
    "description":"Framework for building network protocols",
-   "version":"0.2.0",
+   "version":"0.2.2",
    "homepage":"http://github.com/wearefractal/protosock",
    "repository":"git://github.com/wearefractal/protosock.git",
    "author":"Fractal <contact@wearefractal.com> (http://wearefractal.com/)",
@@ -11,8 +11,8 @@
       "coffee-script":"*",
       "async":"*",
       "emitter-component": "*",
-      "engine.io":"0.4.1",
-      "engine.io-client":"0.4.1"
+      "engine.io":"*",
+      "engine.io-client":"*"
    },
    "devDependencies":{
       "mocha":"*",

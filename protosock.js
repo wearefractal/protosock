@@ -358,149 +358,12 @@ Emitter.prototype.hasListeners = function(event){
 };
 
 });
-require.register("visionmedia-debug/index.js", function(exports, require, module){
-if ('undefined' == typeof window) {
-  module.exports = require('./lib/debug');
-} else {
-  module.exports = require('./debug');
-}
-
-});
-require.register("visionmedia-debug/debug.js", function(exports, require, module){
-
-/**
- * Expose `debug()` as the module.
- */
-
-module.exports = debug;
-
-/**
- * Create a debugger with the given `name`.
- *
- * @param {String} name
- * @return {Type}
- * @api public
- */
-
-function debug(name) {
-  if (!debug.enabled(name)) return function(){};
-
-  return function(fmt){
-    var curr = new Date;
-    var ms = curr - (debug[name] || curr);
-    debug[name] = curr;
-
-    fmt = name
-      + ' '
-      + fmt
-      + ' +' + debug.humanize(ms);
-
-    // This hackery is required for IE8
-    // where `console.log` doesn't have 'apply'
-    window.console
-      && console.log
-      && Function.prototype.apply.call(console.log, console, arguments);
-  }
-}
-
-/**
- * The currently active debug mode names.
- */
-
-debug.names = [];
-debug.skips = [];
-
-/**
- * Enables a debug mode by name. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} name
- * @api public
- */
-
-debug.enable = function(name) {
-  localStorage.debug = name;
-
-  var split = (name || '').split(/[\s,]+/)
-    , len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    name = split[i].replace('*', '.*?');
-    if (name[0] === '-') {
-      debug.skips.push(new RegExp('^' + name.substr(1) + '$'));
-    }
-    else {
-      debug.names.push(new RegExp('^' + name + '$'));
-    }
-  }
-};
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-debug.disable = function(){
-  debug.enable('');
-};
-
-/**
- * Humanize the given `ms`.
- *
- * @param {Number} m
- * @return {String}
- * @api private
- */
-
-debug.humanize = function(ms) {
-  var sec = 1000
-    , min = 60 * 1000
-    , hour = 60 * min;
-
-  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
-  if (ms >= min) return (ms / min).toFixed(1) + 'm';
-  if (ms >= sec) return (ms / sec | 0) + 's';
-  return ms + 'ms';
-};
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-debug.enabled = function(name) {
-  for (var i = 0, len = debug.skips.length; i < len; i++) {
-    if (debug.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (var i = 0, len = debug.names.length; i < len; i++) {
-    if (debug.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-};
-
-// persist
-
-if (window.localStorage) debug.enable(localStorage.debug);
-});
-require.register("LearnBoost-engine.io-client/lib/index.js", function(exports, require, module){
-
-module.exports = require('./socket');
-
-});
-require.register("LearnBoost-engine.io-client/lib/parser.js", function(exports, require, module){
+require.register("LearnBoost-engine.io-protocol/lib/index.js", function(exports, require, module){
 /**
  * Module dependencies.
  */
 
-var util = require('./util')
+var keys = require('./keys')
 
 /**
  * Packet types.
@@ -516,7 +379,7 @@ var packets = exports.packets = {
   , noop:     6
 };
 
-var packetslist = util.keys(packets);
+var packetslist = keys(packets);
 
 /**
  * Premade error packet.
@@ -661,6 +524,176 @@ exports.decodePayload = function (data) {
 };
 
 });
+require.register("LearnBoost-engine.io-protocol/lib/keys.js", function(exports, require, module){
+
+/**
+ * Gets the keys for an object.
+ *
+ * @return {Array} keys
+ * @api private
+ */
+
+module.exports = Object.keys || function keys (obj){
+  var arr = [];
+  var has = Object.prototype.hasOwnProperty;
+
+  for (var i in obj) {
+    if (has.call(obj, i)) {
+      arr.push(i);
+    }
+  }
+  return arr;
+};
+
+});
+require.register("visionmedia-debug/index.js", function(exports, require, module){
+if ('undefined' == typeof window) {
+  module.exports = require('./lib/debug');
+} else {
+  module.exports = require('./debug');
+}
+
+});
+require.register("visionmedia-debug/debug.js", function(exports, require, module){
+
+/**
+ * Expose `debug()` as the module.
+ */
+
+module.exports = debug;
+
+/**
+ * Create a debugger with the given `name`.
+ *
+ * @param {String} name
+ * @return {Type}
+ * @api public
+ */
+
+function debug(name) {
+  if (!debug.enabled(name)) return function(){};
+
+  return function(fmt){
+    var curr = new Date;
+    var ms = curr - (debug[name] || curr);
+    debug[name] = curr;
+
+    fmt = name
+      + ' '
+      + fmt
+      + ' +' + debug.humanize(ms);
+
+    // This hackery is required for IE8
+    // where `console.log` doesn't have 'apply'
+    window.console
+      && console.log
+      && Function.prototype.apply.call(console.log, console, arguments);
+  }
+}
+
+/**
+ * The currently active debug mode names.
+ */
+
+debug.names = [];
+debug.skips = [];
+
+/**
+ * Enables a debug mode by name. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} name
+ * @api public
+ */
+
+debug.enable = function(name) {
+  try {
+    localStorage.debug = name;
+  } catch(e){}
+
+  var split = (name || '').split(/[\s,]+/)
+    , len = split.length;
+
+  for (var i = 0; i < len; i++) {
+    name = split[i].replace('*', '.*?');
+    if (name[0] === '-') {
+      debug.skips.push(new RegExp('^' + name.substr(1) + '$'));
+    }
+    else {
+      debug.names.push(new RegExp('^' + name + '$'));
+    }
+  }
+};
+
+/**
+ * Disable debug output.
+ *
+ * @api public
+ */
+
+debug.disable = function(){
+  debug.enable('');
+};
+
+/**
+ * Humanize the given `ms`.
+ *
+ * @param {Number} m
+ * @return {String}
+ * @api private
+ */
+
+debug.humanize = function(ms) {
+  var sec = 1000
+    , min = 60 * 1000
+    , hour = 60 * min;
+
+  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
+  if (ms >= min) return (ms / min).toFixed(1) + 'm';
+  if (ms >= sec) return (ms / sec | 0) + 's';
+  return ms + 'ms';
+};
+
+/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+
+debug.enabled = function(name) {
+  for (var i = 0, len = debug.skips.length; i < len; i++) {
+    if (debug.skips[i].test(name)) {
+      return false;
+    }
+  }
+  for (var i = 0, len = debug.names.length; i < len; i++) {
+    if (debug.names[i].test(name)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// persist
+
+if (window.localStorage) debug.enable(localStorage.debug);
+
+});
+require.register("LearnBoost-engine.io-client/lib/index.js", function(exports, require, module){
+
+module.exports = require('./socket');
+
+/**
+ * Exports parser
+ *
+ * @api public
+ *
+ */
+module.exports.parser = require('engine.io-parser');
+
+});
 require.register("LearnBoost-engine.io-client/lib/socket.js", function(exports, require, module){
 /**
  * Module dependencies.
@@ -723,7 +756,6 @@ function Socket(uri, opts){
        location.port :
        (this.secure ? 443 : 80));
   this.query = opts.query || {};
-  this.query.uid = rnd();
   this.upgrade = false !== opts.upgrade;
   this.path = (opts.path || '/engine.io').replace(/\/$/, '') + '/';
   this.forceJSONP = !!opts.forceJSONP;
@@ -771,7 +803,7 @@ Socket.Transport = require('./transport');
 Socket.Emitter = require('./emitter');
 Socket.transports = require('./transports');
 Socket.util = require('./util');
-Socket.parser = require('./parser');
+Socket.parser = require('engine.io-parser');
 
 /**
  * Creates transport of the given type.
@@ -1028,7 +1060,7 @@ Socket.prototype.onHandshake = function (data) {
   this.emit('handshake', data);
   this.id = data.sid;
   this.transport.query.sid = data.sid;
-  this.upgrades = data.upgrades;
+  this.upgrades = this.filterUpgrades(data.upgrades);
   this.pingInterval = data.pingInterval;
   this.pingTimeout = data.pingTimeout;
   this.onOpen();
@@ -1151,7 +1183,7 @@ Socket.prototype.onError = function (err) {
  */
 
 Socket.prototype.onClose = function (reason, desc) {
-  if ('open' == this.readyState) {
+  if ('opening' == this.readyState || 'open' == this.readyState) {
     debug('socket close with reason: "%s"', reason);
     clearTimeout(this.pingIntervalTimer);
     clearTimeout(this.pingTimeoutTimer);
@@ -1163,15 +1195,20 @@ Socket.prototype.onClose = function (reason, desc) {
 };
 
 /**
- * Generates a random uid.
- *
+ * Filters upgrades, returning only those matching client transports.
+ * 
+ * @param {Array} server upgrades
  * @api private
+ *
  */
 
-function rnd () {
-  return String(Math.random()).substr(5) + String(Math.random()).substr(5);
-}
-
+Socket.prototype.filterUpgrades = function (upgrades) {
+  var filteredUpgrades = [];
+  for (var i = 0, j = upgrades.length; i<j; i++) {
+    if (~this.transports.indexOf(upgrades[i])) filteredUpgrades.push(upgrades[i]);
+  }
+  return filteredUpgrades;
+};
 });
 require.register("LearnBoost-engine.io-client/lib/transport.js", function(exports, require, module){
 
@@ -1180,7 +1217,7 @@ require.register("LearnBoost-engine.io-client/lib/transport.js", function(export
  */
 
 var util = require('./util')
-  , parser = require('./parser')
+  , parser = require('engine.io-parser')
   , Emitter = require('./emitter');
 
 /**
@@ -1373,12 +1410,21 @@ Emitter.prototype.removeAllListeners = function(){
 
 });
 require.register("LearnBoost-engine.io-client/lib/util.js", function(exports, require, module){
-
 /**
  * Status of page load.
  */
 
 var pageLoaded = false;
+
+/**
+ * Returns the global object
+ *
+ * @api private
+ */
+
+exports.global = function () {
+  return 'undefined' != typeof window ? window : global;
+};
 
 /**
  * Inheritance.
@@ -1636,16 +1682,6 @@ exports.qs = function (obj) {
   return str;
 };
 
-/**
- * Returns the global object
- *
- * @api private
- */
-
-exports.global = function () {
-  return 'undefined' != typeof window ? window : global;
-};
-
 });
 require.register("LearnBoost-engine.io-client/lib/transports/index.js", function(exports, require, module){
 
@@ -1719,7 +1755,7 @@ require.register("LearnBoost-engine.io-client/lib/transports/polling.js", functi
 
 var Transport = require('../transport')
   , util = require('../util')
-  , parser = require('../parser')
+  , parser = require('engine.io-parser')
   , debug = require('debug')('engine.io-client:polling');
 
 /**
@@ -2236,7 +2272,7 @@ module.exports = JSONPPolling;
  * Global reference.
  */
 
-var global = util.global()
+var global = util.global();
 
 /**
  * Cached regular expressions.
@@ -2339,6 +2375,7 @@ JSONPPolling.prototype.doClose = function () {
  */
 
 JSONPPolling.prototype.doPoll = function () {
+	var self = this;
   var script = document.createElement('script');
 
   if (this.script) {
@@ -2348,10 +2385,14 @@ JSONPPolling.prototype.doPoll = function () {
 
   script.async = true;
   script.src = this.uri();
+	script.onerror = function(e){
+		self.onError('jsonp poll error',e);
+	}
 
   var insertAt = document.getElementsByTagName('script')[0];
   insertAt.parentNode.insertBefore(script, insertAt);
   this.script = script;
+
 
   if (util.ua.gecko) {
     setTimeout(function () {
@@ -2374,10 +2415,10 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
   var self = this;
 
   if (!this.form) {
-    var form = document.createElement('form')
-      , area = document.createElement('textarea')
-      , id = this.iframeId = 'eio_iframe_' + this.index
-      , iframe;
+    var form = document.createElement('form');
+    var area = document.createElement('textarea');
+    var id = this.iframeId = 'eio_iframe_' + this.index;
+    var iframe;
 
     form.className = 'socketio';
     form.style.position = 'absolute';
@@ -2403,15 +2444,21 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 
   function initIframe () {
     if (self.iframe) {
-      self.form.removeChild(self.iframe);
+      try {
+        self.form.removeChild(self.iframe);
+      } catch (e) {
+        self.onError('jsonp polling iframe removal error', e);
+      }
     }
 
     try {
       // ie6 dynamic iframes with target="" support (thanks Chris Lambacher)
-      iframe = document.createElement('<iframe name="'+ self.iframeId +'">');
+      var html = '<iframe src="javascript:0" name="'+ self.iframeId +'">';
+      iframe = document.createElement(html);
     } catch (e) {
       iframe = document.createElement('iframe');
       iframe.name = self.iframeId;
+      iframe.src = 'javascript:0';
     }
 
     iframe.id = self.iframeId;
@@ -2448,7 +2495,7 @@ require.register("LearnBoost-engine.io-client/lib/transports/websocket.js", func
  */
 
 var Transport = require('../transport')
-  , parser = require('../parser')
+  , parser = require('engine.io-parser')
   , util = require('../util')
   , debug = require('debug')('engine.io-client:websocket');
 
@@ -3229,7 +3276,6 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
 require.alias("component-emitter/index.js", "protosock/deps/emitter/index.js");
 
 require.alias("LearnBoost-engine.io-client/lib/index.js", "protosock/deps/engine.io/lib/index.js");
-require.alias("LearnBoost-engine.io-client/lib/parser.js", "protosock/deps/engine.io/lib/parser.js");
 require.alias("LearnBoost-engine.io-client/lib/socket.js", "protosock/deps/engine.io/lib/socket.js");
 require.alias("LearnBoost-engine.io-client/lib/transport.js", "protosock/deps/engine.io/lib/transport.js");
 require.alias("LearnBoost-engine.io-client/lib/emitter.js", "protosock/deps/engine.io/lib/emitter.js");
@@ -3242,6 +3288,11 @@ require.alias("LearnBoost-engine.io-client/lib/transports/websocket.js", "protos
 require.alias("LearnBoost-engine.io-client/lib/transports/flashsocket.js", "protosock/deps/engine.io/lib/transports/flashsocket.js");
 require.alias("LearnBoost-engine.io-client/lib/index.js", "protosock/deps/engine.io/index.js");
 require.alias("component-emitter/index.js", "LearnBoost-engine.io-client/deps/emitter/index.js");
+
+require.alias("LearnBoost-engine.io-protocol/lib/index.js", "LearnBoost-engine.io-client/deps/engine.io-parser/lib/index.js");
+require.alias("LearnBoost-engine.io-protocol/lib/keys.js", "LearnBoost-engine.io-client/deps/engine.io-parser/lib/keys.js");
+require.alias("LearnBoost-engine.io-protocol/lib/index.js", "LearnBoost-engine.io-client/deps/engine.io-parser/index.js");
+require.alias("LearnBoost-engine.io-protocol/lib/index.js", "LearnBoost-engine.io-protocol/index.js");
 
 require.alias("visionmedia-debug/index.js", "LearnBoost-engine.io-client/deps/debug/index.js");
 require.alias("visionmedia-debug/debug.js", "LearnBoost-engine.io-client/deps/debug/debug.js");
