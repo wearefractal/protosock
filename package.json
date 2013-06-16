@@ -10,9 +10,9 @@
    "dependencies":{
       "coffee-script":"*",
       "async":"*",
-      "engine.io":"http://github.com/Contra/engine.io/archive/0.6.0.tar.gz",
-      "engine.io-client":"http://github.com/Contra/engine.io-client/archive/0.6.0.tar.gz",
-      "emitter-component": "*"
+      "engine.io":"*",
+      "engine.io-client":"*",
+      "emitter-component":"*"
    },
    "devDependencies":{
       "mocha":"*",
