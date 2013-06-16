@@ -10,7 +10,6 @@
    "dependencies":{
       "coffee-script":"*",
       "async":"*",
-      "emitter-component": "*",
       "engine.io":"*",
       "engine.io-client":"*"
    },
@@ -19,7 +18,8 @@
       "should":"*",
       "connect":"*",
       "browserbuild":"*",
-      "uglify-js":"*"
+      "uglify-js":"*",
+      "emitter-component": "*"
    },
    "scripts":{
       "test":"mocha --compilers coffee:coffee-script"
