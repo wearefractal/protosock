@@ -207,7 +207,25 @@ require.relative = function(parent) {
 
   return localRequire;
 };
+require.register("component-indexof/index.js", function(exports, require, module){
+
+var indexOf = [].indexOf;
+
+module.exports = function(arr, obj){
+  if (indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
+};
+});
 require.register("component-emitter/index.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var index = require('indexof');
 
 /**
  * Expose `Emitter`.
@@ -294,6 +312,14 @@ Emitter.prototype.off =
 Emitter.prototype.removeListener =
 Emitter.prototype.removeAllListeners = function(event, fn){
   this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
+    return this;
+  }
+
+  // specific event
   var callbacks = this._callbacks[event];
   if (!callbacks) return this;
 
@@ -304,7 +330,7 @@ Emitter.prototype.removeAllListeners = function(event, fn){
   }
 
   // remove specific handler
-  var i = callbacks.indexOf(fn._off || fn);
+  var i = index(callbacks, fn._off || fn);
   if (~i) callbacks.splice(i, 1);
   return this;
 };
@@ -402,7 +428,7 @@ var err = { type: 'error', data: 'parser error' }
  */
 
 exports.encodePacket = function (packet) {
-  var encoded = packets[packet.type]
+  var encoded = packets[packet.type];
 
   // data fragment is optional
   if (undefined !== packet.data) {
@@ -465,37 +491,37 @@ exports.encodePayload = function (packets) {
 /*
  * Decodes data when a payload is maybe expected.
  *
- * @param {String} data
- * @return {Array} packets
+ * @param {String} data, callback method
+ * @return {NaN} 
  * @api public
  */
 
-exports.decodePayload = function (data) {
+exports.decodePayload = function (data, callback) {
+  var packet;
   if (data == '') {
     // parser error - ignoring payload
-    return [err];
+    return callback(err, 0, 1);
   }
 
-  var packets = []
-    , length = ''
-    , n, msg, packet
+  var length = ''
+    , n, msg;
 
   for (var i = 0, l = data.length; i < l; i++) {
-    var chr = data.charAt(i)
+    var chr = data.charAt(i);
 
     if (':' != chr) {
       length += chr;
     } else {
       if ('' == length || (length != (n = Number(length)))) {
         // parser error - ignoring payload
-        return [err];
+        return callback(err, 0, 1);
       }
 
       msg = data.substr(i + 1, n);
 
       if (length != msg.length) {
         // parser error - ignoring payload
-        return [err];
+        return callback(err, 0, 1);
       }
 
       if (msg.length) {
@@ -503,24 +529,23 @@ exports.decodePayload = function (data) {
 
         if (err.type == packet.type && err.data == packet.data) {
           // parser error in individual packet - ignoring payload
-          return [err];
+          return callback(err, 0, 1);
         }
 
-        packets.push(packet);
+        callback(packet, i + n, l);
       }
 
       // advance cursor
       i += n;
-      length = ''
+      length = '';
     }
   }
 
   if (length != '') {
     // parser error - ignoring payload
-    return [err];
+    return callback(err, 0, 1);
   }
 
-  return packets;
 };
 
 });
@@ -702,7 +727,8 @@ require.register("LearnBoost-engine.io-client/lib/socket.js", function(exports, 
 var util = require('./util')
   , transports = require('./transports')
   , Emitter = require('./emitter')
-  , debug = require('debug')('engine-client:socket');
+  , debug = require('debug')('engine-client:socket')
+  , parser = require('engine.io-parser');
 
 /**
  * Module exports.
@@ -756,6 +782,7 @@ function Socket(uri, opts){
        location.port :
        (this.secure ? 443 : 80));
   this.query = opts.query || {};
+  this.query.EIO = parser.protocol; // this is an int, not a string
   this.upgrade = false !== opts.upgrade;
   this.path = (opts.path || '/engine.io').replace(/\/$/, '') + '/';
   this.forceJSONP = !!opts.forceJSONP;
@@ -784,7 +811,7 @@ Emitter(Socket.prototype);
  * @api public
  */
 
-Socket.protocol = 1;
+Socket.protocol = parser.protocol; // this is an int
 
 /**
  * Static EventEmitter.
@@ -1360,13 +1387,7 @@ require.register("LearnBoost-engine.io-client/lib/emitter.js", function(exports,
  * Module dependencies.
  */
 
-var Emitter;
-
-try {
-  Emitter = require('emitter');
-} catch(e){
-  Emitter = require('emitter-component');
-}
+var Emitter = require('emitter');
 
 /**
  * Module exports.
@@ -1397,16 +1418,6 @@ Emitter.prototype.removeEventListener = Emitter.prototype.off;
  */
 
 Emitter.prototype.removeListener = Emitter.prototype.off;
-
-/**
- * Node-compatible `EventEmitter#removeAllListeners`
- *
- * @api public
- */
-
-Emitter.prototype.removeAllListeners = function(){
-  this._callbacks = {};
-};
 
 });
 require.register("LearnBoost-engine.io-client/lib/util.js", function(exports, require, module){
@@ -1868,25 +1879,32 @@ Polling.prototype.poll = function(){
  */
 
 Polling.prototype.onData = function(data){
+  var self = this;
   debug('polling got data %s', data);
   // decode payload
-  var packets = parser.decodePayload(data);
+  parser.decodePayload(data, function(packet, index, total) {self.onDataCallback(packet, index, total)});
+};
 
-  for (var i = 0, l = packets.length; i < l; i++) {
-    // if its the first message we consider the trnasport open
-    if ('opening' == this.readyState) {
-      this.onOpen();
-    }
-
-    // if its a close packet, we close the ongoing requests
-    if ('close' == packets[i].type) {
-      this.onClose();
-      return;
-    }
-
-    // otherwise bypass onData and handle the message
-    this.onPacket(packets[i]);
+/**
+ * Callback function for payloads
+ * 
+ * @api private
+ */
+ 
+Polling.prototype.onDataCallback = function(packet, index, total){
+  // if its the first message we consider the transport open
+  if ('opening' == this.readyState) {
+    this.onOpen();
   }
+
+  // if its a close packet, we close the ongoing requests
+  if ('close' == packet.type) {
+    this.onClose();
+    return;
+  }
+
+  // otherwise bypass onData and handle the message
+  this.onPacket(packet);
 
   // if we got data we're not polling
   this.polling = false;
@@ -2212,6 +2230,9 @@ Request.prototype.onError = function(err){
  */
 
 Request.prototype.cleanup = function(){
+  if ('undefined' == typeof this.xhr ) {
+    return;
+  }
   // xmlhttprequest
   this.xhr.onreadystatechange = empty;
 
@@ -2912,7 +2933,7 @@ function load (arr, fn) {
 
 });
 require.register("protosock/dist/main.js", function(exports, require, module){
-// Generated by CoffeeScript 1.4.0
+// Generated by CoffeeScript 1.6.1
 (function() {
   var Client, Server, defaultClient, defaultServer, ps, util;
 
@@ -2935,7 +2956,7 @@ require.register("protosock/dist/main.js", function(exports, require, module){
     }
   };
 
-  if (!(typeof window !== "undefined" && window !== null)) {
+  if (typeof window === "undefined" || window === null) {
     Server = require('./Server');
     defaultServer = require('./defaultServer');
     require("http").globalAgent.maxSockets = 999;
@@ -2957,7 +2978,7 @@ require.register("protosock/dist/main.js", function(exports, require, module){
 
 });
 require.register("protosock/dist/Socket.js", function(exports, require, module){
-// Generated by CoffeeScript 1.4.0
+// Generated by CoffeeScript 1.6.1
 (function() {
   var sock;
 
@@ -2981,7 +3002,7 @@ require.register("protosock/dist/Socket.js", function(exports, require, module){
 
 });
 require.register("protosock/dist/util.js", function(exports, require, module){
-// Generated by CoffeeScript 1.4.0
+// Generated by CoffeeScript 1.6.1
 (function() {
   var nu, util,
     __hasProp = {}.hasOwnProperty,
@@ -3019,7 +3040,7 @@ require.register("protosock/dist/util.js", function(exports, require, module){
 
 });
 require.register("protosock/dist/defaultClient.js", function(exports, require, module){
-// Generated by CoffeeScript 1.4.0
+// Generated by CoffeeScript 1.6.1
 (function() {
   var def;
 
@@ -3071,10 +3092,10 @@ require.register("protosock/dist/defaultClient.js", function(exports, require, m
 
 });
 require.register("protosock/dist/Client.js", function(exports, require, module){
-// Generated by CoffeeScript 1.4.0
+// Generated by CoffeeScript 1.6.1
 (function() {
   var Client, EventEmitter, engineClient, getDelay, util,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -3106,20 +3127,26 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
     __extends(Client, _super);
 
     function Client(plugin, options) {
-      var eiopts, k, v, _base, _base1, _base2, _ref, _ref1, _ref2;
+      var eiopts, k, v, _base, _base1, _base2, _ref, _ref1, _ref2,
+        _this = this;
       if (options == null) {
         options = {};
       }
-      this.reconnect = __bind(this.reconnect, this);
-
-      this.handleClose = __bind(this.handleClose, this);
-
-      this.handleError = __bind(this.handleError, this);
-
-      this.handleMessage = __bind(this.handleMessage, this);
-
-      this.handleConnection = __bind(this.handleConnection, this);
-
+      this.reconnect = function(cb) {
+        return Client.prototype.reconnect.apply(_this, arguments);
+      };
+      this.handleClose = function(reason) {
+        return Client.prototype.handleClose.apply(_this, arguments);
+      };
+      this.handleError = function(err) {
+        return Client.prototype.handleError.apply(_this, arguments);
+      };
+      this.handleMessage = function(msg) {
+        return Client.prototype.handleMessage.apply(_this, arguments);
+      };
+      this.handleConnection = function() {
+        return Client.prototype.handleConnection.apply(_this, arguments);
+      };
       for (k in plugin) {
         v = plugin[k];
         this[k] = v;
@@ -3274,6 +3301,7 @@ require.register("protosock/dist/Client.js", function(exports, require, module){
 
 });
 require.alias("component-emitter/index.js", "protosock/deps/emitter/index.js");
+require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
 
 require.alias("LearnBoost-engine.io-client/lib/index.js", "protosock/deps/engine.io/lib/index.js");
 require.alias("LearnBoost-engine.io-client/lib/socket.js", "protosock/deps/engine.io/lib/socket.js");
@@ -3288,6 +3316,7 @@ require.alias("LearnBoost-engine.io-client/lib/transports/websocket.js", "protos
 require.alias("LearnBoost-engine.io-client/lib/transports/flashsocket.js", "protosock/deps/engine.io/lib/transports/flashsocket.js");
 require.alias("LearnBoost-engine.io-client/lib/index.js", "protosock/deps/engine.io/index.js");
 require.alias("component-emitter/index.js", "LearnBoost-engine.io-client/deps/emitter/index.js");
+require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
 
 require.alias("LearnBoost-engine.io-protocol/lib/index.js", "LearnBoost-engine.io-client/deps/engine.io-parser/lib/index.js");
 require.alias("LearnBoost-engine.io-protocol/lib/keys.js", "LearnBoost-engine.io-client/deps/engine.io-parser/lib/keys.js");
@@ -3304,7 +3333,7 @@ require.alias("protosock/dist/main.js", "protosock/index.js");
 if (typeof exports == "object") {
   module.exports = require("protosock");
 } else if (typeof define == "function" && define.amd) {
-  define(require("protosock"));
+  define(function(){ return require("protosock"); });
 } else {
   window["ProtoSock"] = require("protosock");
 }})();
